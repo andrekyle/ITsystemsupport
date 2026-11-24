@@ -64,6 +64,9 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
     .filter(learner => isEnrolledForRegister(register, learner))
     .map(learner => ({ register, learner, present: clientLearnerSigned(register, learner) })));
   const attendanceRate = attendanceRows.length ? attendanceRows.filter(row => row.present).length / attendanceRows.length : null;
+  const attendancePercentage = attendanceRate === null ? null : Math.round(attendanceRate * 100);
+  const attendanceRingCircumference = 2 * Math.PI * 28;
+  const attendanceRingOffset = attendanceRingCircumference * (1 - (attendanceRate ?? 0));
   const learnerProgress = useMemo(() => cohort.map(learner => {
     const record = data?.learners.find(item => item.learner_ref === learner.learner_ref);
     const units = MODULES.flatMap(module => module.units);
@@ -83,7 +86,7 @@ export function ClientDashboard({ data, cohort }: { data: ClientDashboardData | 
       <article className="client-dashboard-card client-chart-card">
         <span className="client-card-kicker">Attendance · {monthLabel}</span>
         <div className="client-month-switch" ref={monthMenu}><span>Month</span><button type="button" className="client-month-trigger" aria-haspopup="listbox" aria-expanded={monthOpen} onClick={() => setMonthOpen(open => !open)}><span>{monthLabel}</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" /></svg></button>{monthOpen && <div className="client-month-menu" role="listbox" aria-label="Attendance month">{monthOptions.map(option => <button type="button" role="option" aria-selected={selectedMonth === option.key} key={option.key} onClick={() => { setSelectedMonth(option.key); setMonthOpen(false); }}><span><strong>{option.label}</strong><small>{option.registerCount ? `${option.registerCount} qualifying register${option.registerCount === 1 ? '' : 's'}` : 'No qualifying registers'}</small></span>{selectedMonth === option.key && <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 4 4 8-8" /></svg>}</button>)}</div>}</div>
-        <button type="button" className="client-donut" onClick={() => setDetail('attendance')} aria-haspopup="dialog" aria-label={`View ${monthLabel} absenteeism`} style={{ '--value': `${Math.round((attendanceRate ?? 0) * 100) * 3.6}deg` } as React.CSSProperties}><strong>{attendanceRate === null ? '—' : `${Math.round(attendanceRate * 100)}%`}</strong></button>
+        <button type="button" className="client-donut" onClick={() => setDetail('attendance')} aria-haspopup="dialog" aria-label={`View ${monthLabel} absenteeism`}><svg viewBox="0 0 64 64" aria-hidden="true"><circle className="client-donut-track" cx="32" cy="32" r="28" /><circle className="client-donut-value" cx="32" cy="32" r="28" strokeDasharray={attendanceRingCircumference} strokeDashoffset={attendanceRingOffset} /></svg><strong>{attendancePercentage === null ? '\u2014' : `${attendancePercentage}%`}</strong></button>
         <span className="client-card-title">{monthLabel} attendance</span>
         <small>{registers.length ? `${registers.length} register${registers.length === 1 ? '' : 's'} recorded` : feedAvailable ? `No registers recorded for ${monthLabel}` : 'Dashboard feed unavailable — apply the latest database migration'} · Select chart for absenteeism</small>
       </article>
