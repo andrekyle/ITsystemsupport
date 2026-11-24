@@ -126,6 +126,8 @@
 .client-tab-compliance .client-collapsible, .client-tab-compliance .client-main-panels > section:not(.client-compliance) { display: none; }
 .client-tab-documents .client-collapsible, .client-tab-documents .client-compliance { display: none; }
 .client-tab-cohort .client-table-wrap td strong { font-weight: 400; }
+.client-tab-cohort .client-collapsible > .client-table-wrap th,
+.client-tab-cohort .client-collapsible > .client-table-wrap td { padding-top: 6px; padding-bottom: 6px; }
 .client-learner-edit { border: 0 !important; background: transparent !important; padding: 0 !important; color: inherit; text-align: left; cursor: pointer; }
 .client-learner-edit:hover { text-decoration: underline; }
 .client-learner-edit small { display: block; color: var(--ink-3); font-size: 12px; text-decoration: none; }
@@ -135,8 +137,8 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 50vw;
-  min-width: 320px;
+  width: var(--client-checklist-panel-width, 360px);
+  min-width: min(280px, 85vw);
   max-width: 85vw;
   max-height: none;
   overflow: auto;
@@ -318,10 +320,11 @@
 .client-pdf-canvas-wrap { flex: 1; overflow: auto; display: grid; place-items: start center; padding: 20px; background: #333; }
 .client-pdf-canvas-wrap canvas { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.35); }
 .client-document-viewer.report-viewer { width: 50vw; }
+body:has(.client-checklist-editor) { --client-checklist-panel-width: min(360px, 85vw); }
 body:has(.client-checklist-editor) .client-portal .client-content,
 body:has(.client-checklist-editor) .client-portal .client-header,
-body:has(.client-checklist-editor) .client-portal .client-footer { width: calc(100% - 50vw); max-width: none; margin-left: 0; margin-right: 50vw; box-sizing: border-box; }
-body:has(.client-checklist-editor) .client-portal .client-content { margin-left: 0 !important; margin-right: 50vw !important; padding-left: 76px; }
+body:has(.client-checklist-editor) .client-portal .client-footer { width: calc(100% - var(--client-checklist-panel-width)); max-width: none; margin-left: 0; margin-right: var(--client-checklist-panel-width); box-sizing: border-box; }
+body:has(.client-checklist-editor) .client-portal .client-content { margin-left: 0 !important; margin-right: var(--client-checklist-panel-width) !important; padding-left: 76px; }
 body:has(.client-checklist-editor) .client-portal .client-header { padding-left: 24px !important; padding-right: 24px !important; }
 body:has(.client-checklist-editor) .client-portal .client-side-tabs { width: 56px; padding-left: 6px; padding-right: 6px; }
 body:has(.client-checklist-editor) .client-portal .client-side-tabs button { padding: 10px 0; text-align: center; font-size: 0; }
