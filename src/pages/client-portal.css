@@ -237,7 +237,26 @@
   font-weight: 700;
   appearance: none;
 }
-.client-checklist-editor table input { width: 16px; height: 16px; min-height: 0; margin: 0; padding: 0; accent-color: var(--client-accent); }
+.client-checklist-editor table input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #aeb6c2;
+  border-radius: 3px;
+  background: #fff;
+  cursor: pointer;
+}
+.client-checklist-editor table input[type="checkbox"]:checked {
+  border-color: #8c96a3;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.2 3 3 6-6.4' fill='none' stroke='%23303749' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+}
 .client-checklist-editor input:not([readonly]):focus-visible,
 .client-checklist-editor table input:focus-visible { outline: 2px solid var(--client-accent); outline-offset: 2px; }
 .client-checklist-editor .checklist-footer { position: static; background: transparent; color: var(--ink-3); }
