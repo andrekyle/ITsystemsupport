@@ -59,7 +59,7 @@ type AttRowLike = AttendanceEvidenceRow;
  *  id still belong to the learner. */
 type ProfileRef = string | { id: string; name?: string; enrolment?: { idNumber?: string; signedDate?: string } };
 
-function joinedDate(ref: ProfileRef): string | null {
+function enrolmentSignedDate(ref: ProfileRef): string | null {
   return typeof ref === "string" ? null : latestIsoDate(ref.enrolment?.signedDate);
 }
 
@@ -79,12 +79,11 @@ function signedRegister(rows: Record<string, AttRowLike> | undefined, ref: Profi
   return false;
 }
 
-/** Count attendance registers on this device that the profile has signed. */
+/** Count qualifying registers this profile signed, regardless of enrolment-form date. */
 export function attendanceSignedCount(ref: ProfileRef): number {
   let signed = 0;
-  const joined = joinedDate(ref);
   for (const [date, rows] of attendanceEvidence()) {
-    if ((!joined || date >= joined) && isCountedAttendanceRegister(rows) && signedRegister(rows, ref)) signed++;
+    if (isCountedAttendanceRegister(rows) && signedRegister(rows, ref)) signed++;
   }
   return signed;
 }
@@ -111,25 +110,24 @@ export function attendanceFilledRegisterDates(): string[] {
 /** ISO dates of the registers this profile has signed. */
 export function attendanceSignedDates(ref: ProfileRef): string[] {
   const dates: string[] = [];
-  const joined = joinedDate(ref);
   for (const [date, rows] of attendanceEvidence()) {
-    if ((!joined || date >= joined) && isCountedAttendanceRegister(rows) && signedRegister(rows, ref)) dates.push(date);
+    if (isCountedAttendanceRegister(rows) && signedRegister(rows, ref)) dates.push(date);
   }
   return dates.sort();
 }
 
-/** Use the enrolment date, falling back to the first signed register if absent. */
+/** Use the first qualifying signed register, falling back to the enrolment form date. */
 export function attendanceExpectedCount(ref: ProfileRef): number {
   // measured against FILLED registers only — empty/future sheets don't count
   const dates: string[] = [];
   let first: string | null = null;
-  const joined = joinedDate(ref);
+  const enrolmentDate = enrolmentSignedDate(ref);
   for (const [date, rows] of attendanceEvidence()) {
     if (!isCountedAttendanceRegister(rows)) continue;
     dates.push(date);
-    if ((!joined || date >= joined) && signedRegister(rows, ref) && (!first || date < first)) first = date;
+    if (signedRegister(rows, ref) && (!first || date < first)) first = date;
   }
-  const cutoff = learnerAttendanceStartDate(joined, first);
+  const cutoff = learnerAttendanceStartDate(enrolmentDate, first);
   if (!cutoff) return dates.length;
   return dates.filter((d) => d >= cutoff).length;
 }

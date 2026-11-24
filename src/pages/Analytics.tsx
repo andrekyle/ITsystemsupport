@@ -88,8 +88,8 @@ export function analyse(p: Profile, cloud: CloudLearnerData | null): LearnerRow 
   }
 
   const attendance = attendanceSignedCount(p);
-  // Use the enrolment date when available, falling back to the first signed
-  // register for legacy profiles without enrolment dates.
+  // The first qualifying signed register is stronger evidence than the
+  // enrolment form's signature date.
   const attendanceExpected = attendanceExpectedCount(p);
   const attendanceRate = attendanceExpected > 0 ? attendance / attendanceExpected : null;
   const daysSinceSeen = p.lastLogin

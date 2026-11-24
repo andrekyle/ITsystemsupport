@@ -7,8 +7,8 @@ export function latestIsoDate(...values: (string | null | undefined)[]): string 
 }
 
 export function learnerAttendanceStartDate(
-  joinedDate: string | null | undefined,
+  enrolmentSignedDate: string | null | undefined,
   firstSignedDate: string | null | undefined,
 ): string | null {
-  return latestIsoDate(joinedDate) ?? latestIsoDate(firstSignedDate);
+  return latestIsoDate(firstSignedDate) ?? latestIsoDate(enrolmentSignedDate);
 }

@@ -351,7 +351,7 @@ export function buildReportData(
       id: row.profile.id,
       name: row.profile.name,
       signedDates: row.signedDates,
-      joinedDate: row.profile.enrolment?.signedDate,
+      enrolmentSignedDate: row.profile.enrolment?.signedDate,
     })),
     sessions.map(({ date, signedProfileIds }) => ({ date, signedProfileIds }))
   );

@@ -15,7 +15,6 @@ import {
   PRIVATE_LEARNER_INFO_REFUSAL,
   sanitizeAssistantData,
 } from "../src/lib/assistantPrivacy";
-import { latestIsoDate } from "../src/lib/learnerDates";
 
 const dates = [
   "2026-10-01",
@@ -62,26 +61,47 @@ test("attendance records count absences from register statuses, not total sessio
   ]);
 });
 
-test("enrollment date excludes attendance before a learner joined", () => {
-  const [record] = buildLearnerAttendanceRecords(
-    [{
-      id: "bradley",
-      name: "Bradley",
-      joinedDate: "2026-08-13",
-      signedDates: ["2026-07-24", "2026-08-21"],
-    }],
+test("qualifying register signatures override a later enrolment-form date", () => {
+  const [thokozani, bradley] = buildLearnerAttendanceRecords(
     [
-      { date: "2026-07-24", signedProfileIds: ["bradley"] },
+      {
+        id: "thokozani",
+        name: "Thokozani",
+        enrolmentSignedDate: "2026-08-13",
+        signedDates: ["2026-07-17", "2026-07-24"],
+      },
+      {
+        id: "bradley",
+        name: "Bradley",
+        enrolmentSignedDate: "2026-08-13",
+        signedDates: ["2026-08-05", "2026-08-21"],
+      },
+    ],
+    [
+      { date: "2026-07-17", signedProfileIds: ["thokozani"] },
+      { date: "2026-07-24", signedProfileIds: ["thokozani"] },
+      { date: "2026-08-05", signedProfileIds: ["bradley"] },
+      { date: "2026-08-07", signedProfileIds: [] },
       { date: "2026-08-14", signedProfileIds: [] },
       { date: "2026-08-21", signedProfileIds: ["bradley"] },
     ]
   );
 
-  assert.equal(latestIsoDate("2026-07-17", "2026-08-13T00:00:00.000Z"), "2026-08-13");
-  assert.equal(record.firstSession, "2026-08-13");
-  assert.deepEqual(record.sessions, [
-    { date: "2026-08-14", status: "Absent" },
-    { date: "2026-08-21", status: "Present" },
+  assert.equal(thokozani.firstSession, "2026-07-17");
+  assert.deepEqual(thokozani.sessions.map(({ date, status }) => [date, status]), [
+    ["2026-07-17", "Present"],
+    ["2026-07-24", "Present"],
+    ["2026-08-05", "Absent"],
+    ["2026-08-07", "Absent"],
+    ["2026-08-14", "Absent"],
+    ["2026-08-21", "Absent"],
+  ]);
+  assert.equal(bradley.firstSession, "2026-08-05");
+  assert.deepEqual(bradley.sessions.map(({ date, status }) => [date, status]), [
+    ["2026-08-05", "Present"],
+    ["2026-08-07", "Absent"],
+    ["2026-08-14", "Absent"],
+    ["2026-08-21", "Present"],
   ]);
 });
 
