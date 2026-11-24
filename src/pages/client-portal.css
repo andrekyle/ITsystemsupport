@@ -696,13 +696,15 @@ button.client-dashboard-card, .client-chart-card { display: flex; flex-direction
 .client-dashboard-modal h2 { margin: 5px 0 0; color: #132d46; }
 .client-status-present, .client-status-absent { display: inline-block; padding: 3px 7px; border-radius: 999px; background: #e8f4ef; color: #19694f; font-size: 11px; }
 .client-status-absent { background: #fae9e7; color: #963c34; }
-.client-progress-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-.client-progress-groups section { padding: 18px; border-radius: 7px; background: #f4f4f3; }
-.client-progress-groups h3 { display: flex; justify-content: space-between; margin: 0 0 12px; }
-.client-progress-groups section > div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid #dfe2e3; }
-.client-progress-groups section > div span { color: #687585; font-size: 12px; }
+.client-progress-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding: 14px 24px 24px; }
+.client-progress-groups section { min-width: 0; padding: 0; background: #fff; }
+.client-progress-groups h3 { display: flex; justify-content: space-between; margin: 0; padding: 11px 12px; border-bottom: 1px solid #eaecf0; background: #f9fafb; color: #475467; font-size: 12px; font-weight: 600; }
+.client-progress-groups section > div { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 11px 12px; border-bottom: 1px solid #eaecf0; background: #fff; }
+.client-progress-groups section > div strong { color: #101828; font-size: 13px; font-weight: 600; }
+.client-progress-groups section > div span { color: #667085; font-size: 12px; text-align: right; white-space: nowrap; }
+.client-progress-groups section > div:last-of-type { border-bottom: 0; }
 @media(max-width:900px) { .client-dashboard-grid { grid-template-columns: 1fr; } .client-module-card { grid-row: auto; } }
-@media(max-width:600px) { .client-progress-groups { grid-template-columns: 1fr; } .client-dashboard-modal { padding: 10px; } .client-dashboard-modal > div { padding: 18px; } .client-module-list > div > div { align-items: flex-start; flex-direction: column; gap: 2px; } }
+@media(max-width:600px) { .client-progress-groups { grid-template-columns: 1fr; padding: 10px 16px 16px; gap: 16px; } .client-dashboard-modal { padding: 10px; } .client-dashboard-modal > div { padding: 18px; } .client-module-list > div > div { align-items: flex-start; flex-direction: column; gap: 2px; } }
 
 /* Untitled UI-inspired attendance detail: neutral surfaces, crisp table
    hierarchy and compact status indicators instead of coloured pills. */
