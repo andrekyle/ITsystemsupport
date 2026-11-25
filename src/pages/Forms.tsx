@@ -6,6 +6,7 @@ import { autoGrowTextarea } from "../lib/autoGrow";
 import { FitSheet } from "../components/FitSheet";
 import { DateTimePicker } from "../components/DateTimePicker";
 import { FormLibrary } from "../components/FormLibrary";
+import { DocumentSignature } from "../components/DocumentSignature";
 
 /**
  * Eruditio Student Registration Form — laid out to match the paper form
@@ -626,7 +627,15 @@ function StudentRegistrationForm({
             </tr>
             <tr>
               <TL>Student Signature</TL>
-              <TF value={form.learnerSignature} onChange={(v) => set("learnerSignature", v)} />
+              <td className="srf-cell">
+                <DocumentSignature
+                  className="srf-signature"
+                  value={form.learnerSignatureImage ?? ""}
+                  savedSignature={profile.signatureImage}
+                  label="Student signature"
+                  onChange={(value) => set("learnerSignatureImage", value)}
+                />
+              </td>
               <TL>Signature Date</TL>
               <TF type="date" value={form.learnerSignatureDate} onChange={(v) => set("learnerSignatureDate", v)} />
             </tr>

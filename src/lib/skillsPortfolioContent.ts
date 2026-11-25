@@ -1,5 +1,6 @@
 import template from "../data/skillsPortfolio.json";
 import { portfolioReportStyles } from "./portfolioReportStyles";
+import { REMOVED_SIGNATURE_REFERENCE, SAVED_SIGNATURE_REFERENCE } from "./signature";
 import type { Profile } from "../types";
 import type { PortfolioValues } from "./skillsPortfolio";
 
@@ -16,8 +17,14 @@ export function profilePortfolioDefaults(profile: Profile): PortfolioValues {
     f28: [e?.nextOfKinName, e?.nextOfKinPhone].filter(Boolean).join(" · ") };
 }
 export const escapePortfolioHtml = (value: unknown) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-export function portfolioReportHtml(profile: Profile, values: PortfolioValues) {
+export function portfolioReportHtml(profile: Profile, values: PortfolioValues, savedSignature?: string) {
   const esc = escapePortfolioHtml;
+  const signatureImage = (value: unknown, label: string) => {
+    if (!/signature/i.test(label) || typeof value !== "string") return "";
+    const image = value === SAVED_SIGNATURE_REFERENCE ? savedSignature : value;
+    if (!image || !/^data:image\/(?:png|jpe?g|webp);base64,/i.test(image)) return "";
+    return `<img class="signature-image" src="${esc(image)}" alt="${esc(label)}">`;
+  };
   const date = new Intl.DateTimeFormat("en-ZA", { dateStyle: "long", timeZone: "Africa/Johannesburg" }).format(new Date());
   const sections = SKILLS_PORTFOLIO.map((section, index) => {
     let blocks = "";
@@ -31,7 +38,11 @@ export function portfolioReportHtml(profile: Profile, values: PortfolioValues) {
           const field = section.blocks[i];
           if (field.kind !== "field") break;
           const value = field.type === "checkbox" ? values[field.id] === true ? "Confirmed" : "Not confirmed" : values[field.id] ?? "";
-          blocks += `<div class="detail"><dt>${esc(field.label)}</dt><dd${field.type === "textarea" || field.label.toLowerCase() === "written response" ? ' class="written-response"' : ""}>${value === "" ? '<span class="empty">Not recorded</span>' : esc(value)}</dd></div>`;
+          const directImage = signatureImage(value, field.label);
+          const capturedImage = signatureImage(values[`signature.${field.id}`], field.label);
+          const hasValue = value !== "" && value !== REMOVED_SIGNATURE_REFERENCE && (value !== SAVED_SIGNATURE_REFERENCE || !!directImage);
+          const content = hasValue ? directImage || esc(value) : capturedImage || '<span class="empty">Not recorded</span>';
+          blocks += `<div class="detail"><dt>${esc(field.label)}</dt><dd${field.type === "textarea" || field.label.toLowerCase() === "written response" ? ' class="written-response"' : ""}>${content}${hasValue ? capturedImage : ""}</dd></div>`;
           i++;
         }
         i--;
@@ -39,7 +50,11 @@ export function portfolioReportHtml(profile: Profile, values: PortfolioValues) {
       } else {
         const extra = values[`extra.${block.id}`];
         const rows = [...block.rows.map(row => row.map(cell => cell.fixed ? cell.text : values[cell.id] ?? "")), ...(Array.isArray(extra) ? extra : [])];
-        blocks += `<div class="table-wrap"><table><thead><tr>${block.headers.map(header => `<th scope="col">${esc(header)}</th>`).join("")}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${cell === "" ? "&#160;" : esc(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+        blocks += `<div class="table-wrap"><table><thead><tr>${block.headers.map(header => `<th scope="col">${esc(header)}</th>`).join("")}</tr></thead><tbody>${rows.map(row => `<tr>${row.map((cell, cellIndex) => {
+          const image = signatureImage(cell, block.headers[cellIndex] ?? "");
+          const hasValue = cell !== "" && cell !== REMOVED_SIGNATURE_REFERENCE && (cell !== SAVED_SIGNATURE_REFERENCE || !!image);
+          return `<td>${hasValue ? image || esc(cell) : "&#160;"}</td>`;
+        }).join("")}</tr>`).join("")}</tbody></table></div>`;
       }
     }
     const evidence = Object.entries(values).filter(([key]) => key.startsWith(`doc.${section.id}.`)).map(([, value]) => {
@@ -57,7 +72,9 @@ export function portfolioReportHtml(profile: Profile, values: PortfolioValues) {
 export function validatePortfolioImport(input: unknown, learnerId: string): PortfolioValues {
   const data = input as { format?: string; learnerId?: string; values?: PortfolioValues };
   if (!data || data.format !== "itss-skills-portfolio-v1" || data.learnerId !== learnerId || !data.values || typeof data.values !== "object" || Array.isArray(data.values)) throw new Error("Choose a Skills evidence register export for this learner.");
-  const allowed = new Set(SKILLS_PORTFOLIO.flatMap(section => section.blocks.flatMap(block => block.kind === "field" ? [block.id] : block.kind === "table" ? [`extra.${block.id}`, ...block.rows.flatMap(row => row.filter(cell => !cell.fixed).map(cell => cell.id))] : [])));
+  const allowed = new Set(SKILLS_PORTFOLIO.flatMap(section => section.blocks.flatMap(block => block.kind === "field"
+    ? [block.id, ...(/signature/i.test(block.label) ? [`signature.${block.id}`] : [])]
+    : block.kind === "table" ? [`extra.${block.id}`, ...block.rows.flatMap(row => row.filter(cell => !cell.fixed).map(cell => cell.id))] : [])));
   const result: PortfolioValues = {};
   for (const [key, value] of Object.entries(data.values)) {
     if (!allowed.has(key)) continue; // Imports do not authorise verification or inject file paths.

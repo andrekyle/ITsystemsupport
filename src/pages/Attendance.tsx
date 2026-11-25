@@ -8,7 +8,7 @@ import { isStaff } from "../types";
 import { COURSE_META, MODULES, usLabel } from "../data/course";
 import { supabase } from "../lib/supabase";
 import { TENANT_ID } from "../lib/tenant";
-import { fileToSignature, reprocessSignature } from "../lib/signature";
+import { reprocessSignature } from "../lib/signature";
 import { fetchCloudDirectory, updateCloudProfile } from "../lib/directory";
 import { loadProfiles, updateProfile } from "../store";
 import { logAudit } from "../lib/audit";
@@ -17,6 +17,7 @@ import { Icon } from "../icons";
 import { ConfirmModal } from "../components/Modal";
 import { FitSheet } from "../components/FitSheet";
 import { DateTimePicker } from "../components/DateTimePicker";
+import { DocumentSignature } from "../components/DocumentSignature";
 import { Select } from "../components/Select";
 import { flushKey, hasPendingCloudWrite, writeFromCloud } from "../lib/sync";
 
@@ -532,7 +533,6 @@ export function AttendancePage({
   const [reg, setReg] = useState<AttData>(() => readReg(attKey(dateIso)));
   const [askSig, setAskSig] = useState(false);
   const [sigPreview, setSigPreview] = useState<string | null>(null);
-  const [sigError, setSigError] = useState("");
   const [confirming, setConfirming] = useState<{ kind: "register" } | { kind: "row"; pid: string } | null>(null);
   /** all signed registers, loaded for the print-all view (null = normal single-register mode) */
   const [allRegs, setAllRegs] = useState<{ date: string; data: AttData }[] | null>(null);
@@ -752,16 +752,6 @@ export function AttendancePage({
    *  handwritten image is used automatically when one exists. */
   const onSignClick = () => {
     void signNow();
-  };
-
-  const onSigFile = async (file: File | undefined) => {
-    if (!file) return;
-    setSigError("");
-    try {
-      setSigPreview(await fileToSignature(file));
-    } catch {
-      setSigError("Could not read that image — try a clear photo of your signature.");
-    }
   };
 
   const saveSigAndSign = () => {
@@ -1040,93 +1030,97 @@ export function AttendancePage({
 
   return (
     <div className="attendance-page">
-      <h1 className="page-title no-print">Attendance Register</h1>
-      <p className="page-sub no-print">
-        Select any session date and sign its register — your details fill in from your enrolment
-        form. {staff ? "Staff can edit any field, view past registers and download the PDF." : ""}
-      </p>
+      <header className="attendance-register-banner no-print">
+        <div>
+          <span>LEARNING &amp; DEVELOPMENT</span>
+          <h1>Attendance Register</h1>
+          <p>
+            Select any session date and sign its register — your details fill in from your enrolment
+            form. {staff ? "Staff can edit any field, view past registers and download the PDF." : ""}
+          </p>
+        </div>
+      </header>
 
       <div className="att-controls no-print">
-        <div className="att-date-control">
-          <DateTimePicker
-            id="att-session-date"
-            withTime={false}
-            clearable={false}
-            value={dateIso}
-            onChange={(v) => v && setDateIso(v)}
-          />
+        <div className="att-control-row">
+          <div className="att-menu-items" role="toolbar" aria-label="Attendance register actions">
+            <div className="att-date-control">
+              <DateTimePicker
+                id="att-session-date"
+                withTime={false}
+                clearable={false}
+                value={dateIso}
+                onChange={(v) => v && setDateIso(v)}
+              />
+            </div>
+            {staff && savedDates.length > 0 && (
+              <Select
+                className="att-saved-dates"
+                ariaLabel="Open a saved register"
+                value=""
+                placeholder="Open register"
+                buttonLabel={<Icon name="folder" size={15} />}
+                options={savedDates.map(date => ({ value: date, label: date }))}
+                onChange={(date) => { if (date) setDateIso(date); }}
+              />
+            )}
+            <button className="btn ghost sm" aria-label="Refresh register" title="Refresh register" disabled={refreshing || signing} onClick={() => void refresh()}>
+              <Icon name="refresh" size={15} /> {refreshing ? "Refreshing…" : "Refresh"}
+            </button>
+            <button className="btn ghost sm att-sign-action" aria-pressed={signed} aria-label={signed ? "Register signed" : "Sign the register"} title={signed ? "Register signed" : "Sign the register"} disabled={!canSign || signing} onClick={onSignClick}>
+              <Icon name="checkCircle" size={15} /> {signing ? "Signing…" : signed ? "Signed" : "Sign the register — I'm here"}
+            </button>
+            {staff && (
+              <button className="btn ghost sm" aria-label="Download register as PDF" title="Download as PDF" onClick={() => void printLandscape()}>
+                <Icon name="document" size={15} /> Download as PDF
+              </button>
+            )}
+            {staff && (
+              <button className="btn ghost sm" aria-label="Download registers" title="Download registers" disabled={loadingAll} onClick={() => void downloadAll()}>
+                <Icon name="cloudDownload" size={15} /> {loadingAll ? "Gathering registers…" : "Download registers…"}
+              </button>
+            )}
+            {staff && (
+              <button className="btn ghost sm" aria-label="Fix signatures" title="Fix signatures" disabled={fixingSig} onClick={() => void fixSignatures()}>
+                <Icon name="wrench" size={15} /> {fixingSig ? "Cleaning…" : "Fix signatures"}
+              </button>
+            )}
+            {isAdminRole(profile.role) && (
+              <button className="btn ghost sm danger" aria-label="Clear register" title="Clear register" onClick={() => setConfirming({ kind: "register" })}>
+                <Icon name="trash" size={15} /> Clear register
+              </button>
+            )}
+          </div>
+          {(fixNote || attendanceNote || (staff && !Object.keys(reg.rows).length && savedDates.length > 0) || signed) && (
+            <div className="att-control-status" role="status" aria-live="polite">
+              {fixNote && <span className="att-note">{fixNote}</span>}
+              {attendanceNote && <span className="att-note">{attendanceNote}</span>}
+              {staff && !Object.keys(reg.rows).length && savedDates.length > 0 && (
+                <span className="att-note">No signatures on this date. Open a saved register to view earlier entries.</span>
+              )}
+              {signed && (
+                <span className="att-note">
+                  {staff ? "You have signed — you can still edit your row." : "You have signed the register."}
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        {staff && savedDates.length > 0 && (
-          <Select
-            className="att-saved-dates"
-            ariaLabel="Open a saved register"
-            value=""
-            placeholder="Open register"
-            options={savedDates.map(date => ({ value: date, label: date }))}
-            onChange={(date) => { if (date) setDateIso(date); }}
-          />
-        )}
-        {staff && !Object.keys(reg.rows).length && savedDates.length > 0 && (
-          <span className="att-note">No signatures on this date. Open a saved register to view earlier entries.</span>
-        )}
-        <button className="btn ghost sm" disabled={refreshing || signing} onClick={() => void refresh()}>
-          <Icon name="trend" size={15} /> {refreshing ? "Refreshing…" : "Refresh"}
-        </button>
-        <button className="btn ghost sm" disabled={!canSign || signing} onClick={onSignClick}>
-          <Icon name="check" size={15} /> {signing ? "Signing…" : signed ? "Signed" : "Sign the register — I'm here"}
-        </button>
-        {staff && (
-          <button className="btn ghost sm" onClick={() => void printLandscape()}>
-            <Icon name="download" size={15} /> Download as PDF
-          </button>
-        )}
-        {staff && (
-          <button className="btn ghost sm" disabled={loadingAll} onClick={() => void downloadAll()}>
-            <Icon name="download" size={15} /> {loadingAll ? "Gathering registers…" : "Download registers…"}
-          </button>
-        )}
-        {staff && (
-          <button className="btn ghost sm" disabled={fixingSig} onClick={() => void fixSignatures()}>
-            <Icon name="check" size={15} /> {fixingSig ? "Cleaning…" : "Fix signatures"}
-          </button>
-        )}
-        {fixNote && <span className="att-note">{fixNote}</span>}
-        {attendanceNote && <span className="att-note">{attendanceNote}</span>}
-        {isAdminRole(profile.role) && (
-          <button className="btn ghost sm danger" onClick={() => setConfirming({ kind: "register" })}>
-            Clear register
-          </button>
-        )}
-        {signed && (
-          <span className="att-note">
-            {staff ? "You have signed — you can still edit your row." : "You have signed the register."}
-          </span>
-        )}
       </div>
 
       {askSig && (
         <div className="card att-sigask no-print">
-          <h3>Upload your signature</h3>
+          <h3>Add your signature</h3>
           <p>
-            Sign your usual signature on a <strong>white piece of paper</strong>, take a clear
-            photo (or scan) and upload it here. It is saved to your profile and used on the
-            attendance register every Friday — you will only be asked this once.
+            Draw your usual signature below or use the upload control to add a clear photo. It is
+            saved to your profile and can be reused on the attendance register.
           </p>
-          <label className="btn">
-            <Icon name="folder" /> Choose photo of my signature
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => void onSigFile(e.target.files?.[0])}
-            />
-          </label>
-          {sigError && <div className="auth-error">{sigError}</div>}
-          {sigPreview && (
-            <div className="att-sigpreview">
-              <img src={sigPreview} alt="Your signature" />
-            </div>
-          )}
+          <DocumentSignature
+            className="attendance-signature-input"
+            value={sigPreview ?? ""}
+            label="Attendance signature"
+            onChange={value => setSigPreview(value.startsWith("data:image/") ? value : null)}
+          />
           <div className="att-sigask-actions">
             <button className="btn primary" disabled={!sigPreview} onClick={saveSigAndSign}>
               <Icon name="check" /> Save signature &amp; sign the register

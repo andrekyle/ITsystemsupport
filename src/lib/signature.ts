@@ -1,4 +1,5 @@
 export const SAVED_SIGNATURE_REFERENCE = "__saved_signature__";
+export const REMOVED_SIGNATURE_REFERENCE = "__signature_removed__";
 
 /**
  * Reads a photo/scan of a signature and extracts only the pen strokes.

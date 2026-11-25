@@ -21,6 +21,7 @@ p { margin: 0 0 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
 dt { color: #615d57; font-size: 11px; font-weight: 600; }
 dd { margin: 5px 0 0; min-height: 21px; color: #292826; font-size: 14px; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-wrap; }
 dd.written-response { font-weight: 400; }
+.signature-image { display: block; max-width: 220px; max-height: 72px; object-fit: contain; object-position: left center; margin-top: 8px; }
 .empty { color: #81796e; font-style: italic; }
 .table-wrap { margin: 20px 0; overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 12px; }

@@ -53,7 +53,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   padding: 0;
-  border: 0;
+  border: 0 !important;
 }
 
 .deliv-row,
@@ -3361,7 +3361,7 @@ td .with-ico .ico {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 4px 8px 4px 12px;
   background: none;
   border: none;
   color: var(--ink-3);
@@ -4612,6 +4612,11 @@ textarea:focus {
 .pt-pdf-document { display: grid; gap: 28px; max-width: 980px; margin: 0 auto; padding-top: 28px; color: #111; font-family: inherit; }
 .document-signature { position:relative; box-sizing:border-box; width:100%; min-width:0; min-height:48px; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:3px 25px 3px 3px; background:transparent; }
 .document-signature img { display:block; width:auto; max-width:calc(100% - 2px); height:40px; object-fit:contain; }
+.signature-draw-modal { width:min(580px, 100%); }
+.signature-draw-help { margin:0 0 10px; }
+.signature-draw-canvas { display:block; box-sizing:border-box; width:100%; height:150px; border:1px solid var(--border); border-radius:8px; background:#fff; cursor:crosshair; touch-action:none; }
+.signature-draw-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; }
+.signature-draw-footer .auth-error { margin:0; }
 .document-signature-empty { color:#8b8b8b; font-size:11px; font-style:italic; }
 .document-signature-use-saved { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:24px; padding:2px 5px; border:0; border-radius:5px; background:transparent; color:#aaa; font:inherit; font-size:10px; font-weight:400; cursor:pointer; }
 .document-signature-use-saved:hover { background:transparent; color:#777; }
@@ -6076,6 +6081,9 @@ textarea:focus {
   border: 1px solid var(--border-2);
   border-radius: 6px;
 }
+.sig-current .profile-signature-pad { box-sizing:border-box; width:min(360px,100%); min-height:82px; margin-top:8px; padding:8px 34px 8px 12px; border:1px solid var(--border-2); border-radius:6px; background:#fff; }
+.sig-current .profile-signature-pad img { width:auto; height:70px; max-height:90px; padding:0; border:0; border-radius:0; }
+.sig-current .profile-signature-pad .document-signature-use-saved { color:var(--ink-2); font-size:12px; }
 
 /* ---------- people summary table ---------- */
 .summary-card {
@@ -6484,6 +6492,8 @@ textarea:focus {
 .srf-cell {
   padding: 0 !important;
 }
+.srf-signature { min-height:36px; padding:0; }
+.srf-signature img { height:28px; }
 .srf-input {
   width: 100%;
   border: 0;
@@ -6646,6 +6656,11 @@ textarea:focus {
   body.printing-registration .no-print { display: none !important; }
   body.printing-registration .forms-library { display: block !important; }
   body.printing-registration .content-inner { max-width: none !important; }
+  body.printing-registration .srf-signature .document-signature-actions,
+  body.printing-registration .srf-signature .document-signature-use-saved,
+  body.printing-registration .srf-signature .document-signature-empty { display: none !important; }
+  body.printing-registration .srf-signature { min-height: 28px !important; }
+  body.printing-registration .srf-signature img { height: 24px !important; }
 
   html:has(.srf-wrap), body:has(.srf-wrap) {
     height: auto !important;
@@ -12315,23 +12330,8 @@ input.att-sig {
   line-height: 1.5;
 }
 
-.att-sigask label.btn {
-  cursor: pointer;
-}
-
-.att-sigpreview {
-  background: #fff;
-  border: 1px dashed var(--border-2);
-  border-radius: 4px;
-  padding: 8px 12px;
-  margin: 12px 0;
-}
-
-.att-sigpreview img {
-  display: block;
-  max-height: 64px;
-  max-width: 100%;
-}
+.att-sigask .attendance-signature-input { box-sizing:border-box; max-width:360px; min-height:82px; margin:12px 0; padding:8px 34px 8px 12px; border:1px solid var(--border-2); border-radius:6px; background:#fff; }
+.att-sigask .attendance-signature-input .document-signature-use-saved { color:var(--ink-2); font-size:12px; }
 
 .att-sigask-actions {
   display: flex;
@@ -20202,6 +20202,230 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   color: var(--ink);
   background: var(--app-canvas);
   letter-spacing: -0.006em;
+}
+
+/* Attendance register heading and actions mirror the evidence-register visual language.
+   These selectors are intentionally scoped to the attendance page only. */
+.attendance-page .attendance-register-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 122px;
+  margin: -24px -24px 22px;
+  padding: 20px clamp(24px, 5vw, 72px);
+  overflow: hidden;
+  box-sizing: border-box;
+  background: linear-gradient(110deg, #2864bd 0%, #2058ad 65%, #163b78 100%);
+  color: #dbf4fc;
+}
+.attendance-page .attendance-register-banner::before,
+.attendance-page .attendance-register-banner::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  pointer-events: none;
+}
+.attendance-page .attendance-register-banner::before {
+  right: 7%;
+  width: min(390px, 42%);
+  background: linear-gradient(145deg, transparent 0 28%, rgba(80, 145, 231, .7) 28% 58%, rgba(16, 63, 135, .8) 58% 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 38% 100%);
+}
+.attendance-page .attendance-register-banner::after {
+  right: 0;
+  width: min(270px, 30%);
+  background: linear-gradient(145deg, #4385df 0 42%, #194d99 42% 72%, #112f60 72%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 45% 100%);
+  opacity: .9;
+}
+.attendance-page .attendance-register-banner > div { position: relative; z-index: 1; max-width: 720px; }
+.attendance-page .attendance-register-banner span {
+  display: block;
+  margin-bottom: 5px;
+  color: #dbf4fc;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+}
+.attendance-page .attendance-register-banner h1 {
+  margin: 0;
+  color: #dbf4fc;
+  font-size: clamp(20px, 2.2vw, 27px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.attendance-page .attendance-register-banner p {
+  margin: 7px 0 0;
+  color: rgba(219, 244, 252, .88);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.attendance-page > .att-controls {
+  display: block;
+  max-width: none;
+  margin-bottom: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  overflow: visible;
+}
+.attendance-page .att-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding-inline: min(34px, 3.207547%);
+  gap: 12px;
+}
+.attendance-page .att-menu-items {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  flex: 0 1 auto;
+  padding: 4px 8px 4px 12px;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border: 1px solid rgba(7, 84, 201, .2);
+  border-radius: 999px;
+  background: rgba(7, 84, 201, .12);
+  box-shadow: 0 6px 16px rgba(0, 74, 173, .08);
+}
+.attendance-page .att-menu-items::-webkit-scrollbar { display: none; }
+.attendance-page .att-menu-items > * {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+}
+.attendance-page .att-menu-items > .att-date-control,
+.attendance-page .att-menu-items > .att-saved-dates { width: 38px; min-width: 38px; }
+.attendance-page .att-menu-items .btn,
+.attendance-page .att-menu-items .dtp-btn,
+.attendance-page .att-menu-items .nice-select-btn,
+.attendance-page .att-menu-items .btn.ghost.sm {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent;
+  color: #0754c9;
+  font-size: 0 !important;
+  white-space: nowrap;
+}
+.attendance-page .att-menu-items .att-date-control .dtp-btn {
+  width: 38px;
+  background: transparent;
+  color: #0754c9;
+}
+.attendance-page .att-menu-items .att-date-control .dtp-btn svg,
+.attendance-page .att-menu-items .btn svg { color: #0754c9; }
+.attendance-page .att-menu-items .nice-select-btn {
+  width: 38px;
+  justify-content: center;
+  color: #0754c9;
+  font-size: 0 !important;
+}
+.attendance-page .att-menu-items .nice-select-value,
+.attendance-page .att-menu-items .nice-select-chev { display: grid; place-items: center; }
+.attendance-page .att-menu-items .nice-select-chev { display: none; }
+.attendance-page .att-menu-items .nice-select-btn svg { margin: 0; }
+.attendance-page .att-menu-items button svg { width: 18px; height: 18px; margin: 0; stroke-width: 1.35; }
+.attendance-page .att-menu-items .att-sign-action[aria-pressed="true"] { background: transparent; color: #0754c9; }
+.attendance-page .att-menu-items .att-sign-action[aria-pressed="true"] svg { color: #0754c9; }
+.attendance-page .att-menu-items :is(.btn, .dtp-btn, .nice-select-btn):focus,
+.attendance-page .att-menu-items :is(.btn, .dtp-btn, .nice-select-btn).open {
+  outline: 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.attendance-page .att-menu-items :is(.btn, .dtp-btn, .nice-select-btn):focus-visible {
+  outline: 0;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.attendance-page .att-menu-items .btn:hover:not(:disabled),
+.attendance-page .att-menu-items .btn.ghost.sm:hover:not(:disabled),
+.attendance-page .att-menu-items .dtp-btn:hover,
+.attendance-page .att-menu-items .nice-select-btn:hover {
+  border-color: transparent !important;
+  background: transparent !important;
+  opacity: .72;
+}
+.attendance-page .att-control-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  min-width: 0;
+  margin-left: auto;
+  text-align: right;
+}
+.attendance-page .att-control-status .att-note {
+  display: block;
+  margin: 0;
+  padding: 0;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.attendance-page .att-menu-items .btn:disabled { color: #9ca3af; opacity: .72; }
+.attendance-page .att-menu-items .btn.danger { color: #0754c9; }
+.attendance-page .att-menu-items .btn.danger:hover:not(:disabled) { background: transparent !important; }
+.attendance-page .att-menu-items .nice-select-menu,
+.attendance-page .att-menu-items .dtp-popover {
+  z-index: 30;
+}
+[data-theme="dark"] .attendance-page .att-menu-items {
+  border-color: rgba(148, 193, 255, .24);
+  background: rgba(148, 193, 255, .08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .24);
+}
+[data-theme="dark"] .attendance-page .att-menu-items :is(.btn, .dtp-btn, .nice-select-btn),
+[data-theme="dark"] .attendance-page .att-menu-items :is(.btn, .dtp-btn, .nice-select-btn) svg,
+[data-theme="dark"] .attendance-page .att-menu-items .att-sign-action[aria-pressed="true"] {
+  color: #d8e5ff;
+}
+[data-theme="dark"] .attendance-page .att-menu-items .btn:disabled,
+[data-theme="dark"] .attendance-page .att-menu-items .btn:disabled svg {
+  color: #8b96a5;
+}
+[data-theme="dark"] .attendance-page .att-menu-items .btn.danger,
+[data-theme="dark"] .attendance-page .att-menu-items .btn.danger svg {
+  color: #d8e5ff;
+}
+@media (max-width: 760px) {
+  .attendance-page .att-control-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .attendance-page .att-control-status {
+    flex: 1 1 100%;
+    align-items: flex-start;
+    margin-left: 0;
+    text-align: left;
+  }
+  .attendance-page .attendance-register-banner {
+    min-height: 108px;
+    margin: -16px -16px 16px;
+    padding: 16px 18px;
+  }
+  .attendance-page .attendance-register-banner p { max-width: 72%; font-size: 11px; }
+  .attendance-page .att-menu-items {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+  }
 }
 
 [data-theme="light"] :is(h1, h2, h3, h4, h5, h6, .page-title, .section-title) {

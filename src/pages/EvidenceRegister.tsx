@@ -7,9 +7,11 @@ import { cloudProfileIds, fetchCloudLearnerData, mergeProfileWithCloud, remoteOn
 import { Icon } from "../icons";
 import { Modal } from "../components/Modal";
 import { PortfolioDateInput } from "../components/PortfolioDateInput";
+import { DocumentSignature } from "../components/DocumentSignature";
 import { ClientAccessPanel } from "../components/ClientAccessPanel";
 import { useSkillsPortfolio } from "../lib/skillsPortfolio";
 import { SKILLS_PORTFOLIO, portfolioReportHtml, profilePortfolioDefaults, validatePortfolioImport, type PortfolioTable } from "../lib/skillsPortfolioContent";
+import { canSignDocumentField } from "../lib/documentSignatures";
 import { mergeProgressEvidence } from "../lib/progressEvidence";
 import { savedWorkbookAnswers, savedLessonAnswers, savedLessonQuizResults, savedAcademicWorkHtml } from "../lib/academicEvidence";
 import { useSavedLessonQuizzes } from "../lib/useSavedLessonQuizzes";
@@ -123,6 +125,18 @@ function SkillsRegister({ profile }: { profile: Profile }) {
     return value && typeof value === "object" && !Array.isArray(value) ? value : fallback ? { doc: fallback } : undefined;
   }
   const reviewItem = review ? attachmentRecord(review.id, review.fallback) : undefined;
+  function signatureCapture(key: string, label: string) {
+    const canSign = canSignDocumentField(profile.role, label);
+    const value = values[key];
+    return <DocumentSignature
+      className="portfolio-register-signature"
+      value={typeof value === "string" ? value : ""}
+      savedSignature={canSign ? profile.signatureImage : undefined}
+      label={label}
+      editable={canSign && !disabled}
+      onChange={value => record.update(key, value)}
+    />;
+  }
   function attachment(id: string, label: string, fallback?: PoeDoc, oldId?: string) {
     const item = attachmentRecord(id, fallback);
     return <div className={`portfolio-evidence${item ? " has-document" : " is-empty"}`} key={id}>
@@ -137,14 +151,17 @@ function SkillsRegister({ profile }: { profile: Profile }) {
   function renderTable(block: PortfolioTable) {
     const stored = values[`extra.${block.id}`];
     const extra = Array.isArray(stored) ? stored : [];
-    const rows = [...block.rows, ...extra.map((row, ri) => row.map((text, ci) => ({ id: `${block.id}-extra-${ri}-${ci}`, text, fixed: false })))];
+    const templateRows = sectionId === "section-7" && block.id === "s7-652"
+      ? [...block.rows.slice(0, 5), ...block.rows.slice(5).filter(row => row.some(cell => Boolean(values[cell.id])))]
+      : block.rows;
+    const rows = [...templateRows, ...extra.map((row, ri) => row.map((text, ci) => ({ id: `${block.id}-extra-${ri}-${ci}`, text, fixed: false })))];
     const results = block.headers.some(header => /C\s*\/\s*NYC/i.test(header));
     function cellControl(cell: { id: string; text: string }, ri: number, ci: number) {
       const header = block.headers[ci] ?? "Value";
-      const value = ri < block.rows.length ? String(values[cell.id] ?? "") : cell.text;
+      const value = ri < templateRows.length ? String(values[cell.id] ?? "") : cell.text;
       const onChange = (value: string) => {
-        if (ri < block.rows.length) record.update(cell.id, value);
-        else { const next = extra.map(row => [...row]); next[ri - block.rows.length][ci] = value; record.update(`extra.${block.id}`, next); }
+        if (ri < templateRows.length) record.update(cell.id, value);
+        else { const next = extra.map(row => [...row]); next[ri - templateRows.length][ci] = value; record.update(`extra.${block.id}`, next); }
       };
       if (/C\s*\/\s*NYC/i.test(header)) {
         const options = [{ value: "", label: "Not recorded" }, { value: "C", label: "Competent (C)" }, { value: "NYC", label: "Not yet competent (NYC)" }, { value: "Recognised", label: "Recognised" }];
@@ -153,6 +170,17 @@ function SkillsRegister({ profile }: { profile: Profile }) {
       }
       const label = `${header}, row ${ri + 1}`;
       if (/\bdates?\b/i.test(header)) return <PortfolioDateInput label={label} value={value} disabled={disabled} onChange={onChange} />;
+      if (/signature/i.test(header)) {
+        const canSign = canSignDocumentField(profile.role, header);
+        return <DocumentSignature
+          className="portfolio-register-signature"
+          value={value}
+          savedSignature={canSign ? profile.signatureImage : undefined}
+          label={label}
+          editable={canSign && !disabled}
+          onChange={onChange}
+        />;
+      }
       return /description|finding|outcome|activities|scope|details|criteria|information|recorded|completed|parties|control/i.test(header)
         ? <textarea aria-label={label} disabled={disabled} rows={1} value={value} onChange={event => onChange(event.target.value)} />
         : <input type="text" aria-label={label} placeholder={sectionId === "section-3" ? "Add reference or note" : undefined} disabled={disabled} value={value} onChange={event => onChange(event.target.value)} />;
@@ -192,8 +220,8 @@ function SkillsRegister({ profile }: { profile: Profile }) {
         <button type="button" className="btn primary" disabled={disabled} onClick={() => void record.save()}>{record.saving ? "Saving…" : "Save changes"}</button>
         <button type="button" className="btn ghost" disabled={disabled} onClick={() => learner && downloadText(filename("Skills-Evidence", ".json", learner.name), JSON.stringify({ format: "itss-skills-portfolio-v1", learnerId: learner.id, learner: learner.name, exportedAt: new Date().toISOString(), values }, null, 2), "application/json")}>Export data</button>
         <button type="button" className="btn ghost" disabled={disabled} onClick={() => importInput.current?.click()}>Import data</button>
-        <button type="button" className="btn ghost" disabled={disabled} onClick={() => learner && downloadText(filename("Skills-Portfolio", ".html", learner.name), portfolioReportHtml(learner, values), "text/html;charset=utf-8")}>Download portfolio</button>
-        <button type="button" className="btn ghost" disabled={disabled} onClick={() => { if (!learner) return; const view = window.open("", "_blank"); if (view) { view.document.write(portfolioReportHtml(learner, values)); view.document.close(); view.focus(); view.print(); } }}>Print / save PDF</button>
+        <button type="button" className="btn ghost" disabled={disabled} onClick={() => learner && downloadText(filename("Skills-Portfolio", ".html", learner.name), portfolioReportHtml(learner, values, profile.signatureImage), "text/html;charset=utf-8")}>Download portfolio</button>
+        <button type="button" className="btn ghost" disabled={disabled} onClick={() => { if (!learner) return; const view = window.open("", "_blank"); if (view) { view.document.write(portfolioReportHtml(learner, values, profile.signatureImage)); view.document.close(); view.focus(); view.print(); } }}>Print / save PDF</button>
       </div>
       <p role="status" aria-live="polite">{record.loading ? "Loading portfolio…" : record.saving ? "Saving changes…" : record.dirty ? "Unsaved changes — draft retained on this device." : "All changes saved."}</p>
     </div>
@@ -234,6 +262,10 @@ function SkillsRegister({ profile }: { profile: Profile }) {
           if (block.kind === "table") return renderTable(block);
           const value = values[block.id];
           if (block.type === "checkbox") return <label className="portfolio-check" key={block.id}><input type="checkbox" checked={value === true} disabled={disabled} onChange={event => record.update(block.id, event.target.checked)} />{block.label}</label>;
+          if (/signature/i.test(block.label)) return <div className="portfolio-signature-field" key={block.id}>
+            <label className="portfolio-field">{block.label}<input type="text" aria-label={`${block.label} text`} value={String(value ?? "")} disabled={disabled} onChange={event => record.update(block.id, event.target.value)} /></label>
+            <div className="portfolio-signature-capture"><span>Handwritten signature</span>{signatureCapture(`signature.${block.id}`, block.label)}</div>
+          </div>;
           return <label className="portfolio-field" key={block.id}>{block.label}{block.type === "select" ? <Select ariaLabel={block.label} value={String(value ?? "")} disabled={disabled} options={block.options ?? []} onChange={value => record.update(block.id, value)} />
             : /\bdates?\b/i.test(block.label) || block.type === "date" ? <PortfolioDateInput label={block.label} value={String(value ?? "")} disabled={disabled} onChange={value => record.update(block.id, value)} />
             : block.type === "textarea" ? <textarea value={String(value ?? "")} disabled={disabled} onChange={event => record.update(block.id, event.target.value)} />

@@ -233,6 +233,7 @@ export interface RegistrationForm {
   /* Signature block */
   signedAt: string;
   learnerSignature: string;
+  learnerSignatureImage?: string;
   learnerSignatureDate: string;
   studentNumber: string;
   /* Administration and Document Control */

@@ -109,7 +109,7 @@
   font-weight: 600;
   line-height: 1.2;
 }
-.evidence-register-shell { width: min(1068px, calc(100% - 40px)); margin: 0 auto; }
+.evidence-register-shell { box-sizing: border-box; width: calc(100% - 24px); max-width: none; margin: 0 auto; padding-left: 12px; }
 .evidence-register-profile {
   display: flex;
   align-items: center;
@@ -142,7 +142,7 @@
   font-weight: 600;
 }
 .evidence-register-page .evidence-register-toolbar {
-  border: 0;
+  border: 0 !important;
   border-top: 1px solid #e7e7e7;
   border-radius: 0;
   background: transparent;
@@ -176,7 +176,7 @@
   .evidence-register-page .evidence-register-banner { height: 108px; padding: 16px 18px; }
   .evidence-register-page .evidence-register-banner::before { right: 0; width: 48%; }
   .evidence-register-page .evidence-register-banner::after { width: 32%; }
-  .evidence-register-shell { width: calc(100% - 28px); }
+  .evidence-register-shell { width: calc(100% - 20px); padding-left: 8px; }
   .evidence-register-profile { gap: 10px; min-height: 78px; margin-top: 0; padding-bottom: 14px; }
   .evidence-register-avatar { flex-basis: 76px; width: 76px; height: 76px; font-size: 21px; }
   .evidence-register-profile h2 { margin-top: 18px; font-size: 18px; overflow-wrap: anywhere; }
@@ -224,6 +224,10 @@
 .evidence-register-page .portfolio-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; color: var(--ink-2); font-size: 14px; }
 .evidence-register-page .portfolio-field input, .evidence-register-page textarea { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--ink); font: inherit; }
 .evidence-register-page textarea { min-height: 80px; resize: vertical; }
+.evidence-register-page .portfolio-signature-field { display: grid; align-content: start; gap: 8px; min-width: 0; }
+.evidence-register-page .portfolio-signature-capture { display: grid; gap: 4px; color: var(--ink-3); font-size: 11px; }
+.evidence-register-page .portfolio-register-signature { min-height: 48px; padding: 4px 30px 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+.evidence-register-page .portfolio-register-signature .document-signature-use-saved { color: var(--ink-2); font-size: 12px; }
 .evidence-register-page .portfolio-date-input { display: grid; gap: 4px; min-width: 0; }
 .evidence-register-page .portfolio-date-pickers { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .evidence-register-page .portfolio-date-pickers input[type="date"] { min-width: 135px; flex: 1; width: 100%; font-weight: 400; }
@@ -238,6 +242,15 @@
 .evidence-register-page .portfolio-table td:last-child { min-width: 240px; }
 .evidence-register-page .portfolio-data-table th:first-child { width: auto; }
 .evidence-register-page .portfolio-table .portfolio-data-table { display: table; width: 100%; overflow: visible; }
+.evidence-register-page .portfolio-table .portfolio-data-table:has(th:nth-child(7)) { table-layout: fixed; }
+.evidence-register-page .portfolio-table .portfolio-data-table:has(th:nth-child(7)) :is(th, td) { min-width: 0; }
+.evidence-register-page .portfolio-table .portfolio-data-table:has(th:nth-child(7)) :is(th, td):nth-child(1) { width: 7%; }
+.evidence-register-page .portfolio-table .portfolio-data-table:has(th:nth-child(7)) :is(th, td):nth-child(2) { width: 10%; }
+.evidence-register-page .portfolio-table .portfolio-data-table:has(th:nth-child(7)) :is(th, td):nth-child(3) { width: auto; }
+.evidence-register-page .portfolio-table .portfolio-data-table:has(th:nth-child(7)) :is(th, td):nth-child(4) { width: 14%; }
+.evidence-register-page .portfolio-table .portfolio-data-table:has(th:nth-child(7)) :is(th, td):nth-child(5) { width: 11%; }
+.evidence-register-page .portfolio-table .portfolio-data-table:has(th:nth-child(7)) :is(th, td):nth-child(6) { width: 12%; }
+.evidence-register-page .portfolio-table .portfolio-data-table:has(th:nth-child(7)) :is(th, td):nth-child(7) { width: 14%; }
 .evidence-register-page .portfolio-table .portfolio-data-table thead { display: table-header-group; }
 .evidence-register-page .portfolio-table .portfolio-data-table tbody { display: table-row-group; }
 .evidence-register-page .portfolio-table .portfolio-data-table tr { display: table-row; padding: 0; }

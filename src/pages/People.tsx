@@ -9,7 +9,7 @@ import { canSeeCourse, canSeeProfile, useAssignments } from "../lib/assignments"
 import { StaffAssignmentsPanel } from "../components/StaffAssignments";
 import { isAdminRole } from "../types";
 import { cohortIds } from "../lib/cohorts";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import JSZip from "jszip";
 import { Icon } from "../icons";
 import { EditingTools } from "../components/EditingSidebar";
@@ -42,11 +42,11 @@ import { openOnboardingPack } from "../lib/onboarding";
 import { mailtoLink, outlookComposeLink, teamsChatLink } from "../lib/integrations";
 import { VerdictSwitch } from "../components/VerdictSwitch";
 import { Avatar } from "../components/Avatar";
+import { DocumentSignature } from "../components/DocumentSignature";
 import { ProfilePortfolio } from "../components/ProfilePortfolio";
 import { EMPTY_ENROLMENT, EnrolmentDetails, EnrolmentForm } from "../components/EnrolmentForm";
 import { AlertModal, ConfirmModal, PromptModal } from "../components/Modal";
 import { downloadDoc, getFileBlob } from "../lib/files";
-import { fileToSignature } from "../lib/signature";
 import { cloudEnabled, makeHeadlessClient, supabase } from "../lib/supabase";
 import { TENANT_ID } from "../lib/tenant";
 import { updateRegisterSignatures } from "./Attendance";
@@ -366,7 +366,7 @@ export function ProfilePage({
   );
 }
 
-/** Upload / replace the handwritten signature — can be redone any number of times. */
+/** Draw, upload, or replace the handwritten signature — can be redone any number of times. */
 function SignatureEditor({
   profile,
   onUpdateProfile,
@@ -375,25 +375,7 @@ function SignatureEditor({
   onUpdateProfile: (patch: Partial<Profile>) => void;
 }) {
   const [preview, setPreview] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  async function onFile(file: File | undefined) {
-    if (!file) return;
-    setError("");
-    setSaved(false);
-    setBusy(true);
-    try {
-      setPreview(await fileToSignature(file));
-    } catch {
-      setError("Could not read that image — try a clear photo of your signature.");
-    } finally {
-      setBusy(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }
 
   function save() {
     if (!preview) return;
@@ -413,33 +395,27 @@ function SignatureEditor({
         </div>
       ) : !preview ? (
         <p className="muted" style={{ margin: "0 0 10px" }}>
-          No signature on record yet. Sign your usual signature on a{" "}
-          <strong>white piece of paper</strong>, take a clear photo of it and upload it here — it
-          is used to sign the attendance register.
+          No signature on record yet. Draw your usual signature below or use the upload control to
+          add a clear photo. It can be reused on documents and attendance registers.
         </p>
       ) : null}
 
-      {preview && (
-        <div className="sig-current preview">
-          <div className="task-label" style={{ marginTop: 0 }}>
-            New signature — preview
-          </div>
-          <img src={preview} alt="New signature preview" />
+      <div className="sig-current preview">
+        <div className="task-label" style={{ marginTop: 0 }}>
+          {preview ? "New signature — preview" : "Draw or upload a signature"}
         </div>
-      )}
+        <DocumentSignature
+          className="profile-signature-pad"
+          value={preview ?? ""}
+          label="Your signature"
+          onChange={value => {
+            setPreview(value.startsWith("data:image/") ? value : null);
+            setSaved(false);
+          }}
+        />
+      </div>
 
       <div className="pw-row" style={{ alignItems: "center" }}>
-        <label className="btn ghost sm" style={{ cursor: "pointer" }}>
-          <Icon name="folder" size={15} />
-          {profile.signatureImage || preview ? "Choose a new photo" : "Choose photo of my signature"}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={(e) => void onFile(e.target.files?.[0])}
-          />
-        </label>
         {preview && (
           <>
             <button className="btn sm" type="button" onClick={save}>
@@ -453,8 +429,6 @@ function SignatureEditor({
         )}
       </div>
 
-      {busy && <p className="muted" style={{ margin: "8px 0 0" }}>Cleaning up the photo…</p>}
-      {error && <p className="muted" style={{ margin: "8px 0 0", color: "var(--red, #c42b1c)" }}>{error}</p>}
       {saved && <p className="muted" style={{ margin: "8px 0 0" }}>Signature saved — updated on every register you have signed.</p>}
       {profile.signatureImage && !preview && (
         <p className="muted" style={{ margin: "8px 0 0" }}>
