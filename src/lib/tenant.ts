@@ -37,6 +37,9 @@ const TENANTS: Record<TenantId, TenantBrand> = {
 };
 
 function configuredTenant(): TenantId {
+  // Presentation-only alias: keep the Investec client account/data scope while
+  // exposing a Discovery-labelled URL for demonstrations.
+  if (/^\/clients\/discovery-demo(?:\/|$)/.test(window.location.pathname)) return "investec";
   const client = window.location.pathname.match(/^\/clients\/(investec|discovery)(?:\/|$)/)?.[1];
   if (client === "discovery" || client === "investec") return client;
   const env = String(import.meta.env.VITE_TENANT ?? "").toLowerCase();

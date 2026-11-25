@@ -467,57 +467,97 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
   --client-accent: #e51b35;
   --ink: #101a34;
   --ink-3: #667085;
-}
-.client-investec.client-login-discovery-demo .client-intro {
   position: relative;
-  isolation: isolate;
   overflow: hidden;
-  color: #101a34;
-  border-right: 0;
+  width: 100%;
+  height: 100dvh;
+  min-height: 620px;
+  display: block;
   background: #f7f8fa url("/discovery/Discovery Learning Hero Banner.png") center / cover no-repeat;
 }
-.client-investec.client-login-discovery-demo .client-intro::after {
+.client-discovery-signin {
   position: absolute;
-  z-index: -1;
-  inset: 0;
-  content: "";
-  background: linear-gradient(90deg, rgba(255,255,255,.94), rgba(255,255,255,.64));
-}
-.client-investec.client-login-discovery-demo .client-brand .client-logo-discovery {
-  width: min(320px, 100%);
-  height: auto;
-  aspect-ratio: auto;
-  object-fit: contain;
-}
-.client-investec.client-login-discovery-demo .client-brand > span { color: #667085; }
-.client-investec.client-login-discovery-demo .client-intro > .client-eyebrow {
-  color: #bd8e4f;
-  font-weight: 700;
-  letter-spacing: .16em;
-}
-.client-investec.client-login-discovery-demo .client-intro h1 {
-  color: #101a34;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  z-index: 2;
+  top: 28px;
+  right: clamp(24px, 5vw, 76px);
+  min-width: 108px;
+  padding: 13px 23px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  color: #002147 !important;
+  background: #fff !important;
   font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,33,71,.08);
 }
-.client-investec.client-login-discovery-demo .client-intro p { color: #586174; opacity: 1; }
-.client-investec.client-login-discovery-demo .client-login-form {
-  border-left: 0;
+.client-discovery-login-overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgba(0,33,71,.72);
+}
+.client-discovery-login-card {
+  position: relative;
+  width: min(460px, calc(100vw - 32px));
+  padding: 38px;
+  border-radius: 32px;
+  color: #17181a;
   background: #fff;
+  box-shadow: 0 30px 90px rgba(0,24,55,.28);
 }
-.client-investec.client-login-discovery-demo .client-login-form h2 {
-  color: #101a34;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-weight: 650;
+.client-discovery-login-close {
+  position: absolute;
+  top: 17px;
+  right: 20px;
+  width: 34px;
+  height: 34px;
+  padding: 0 !important;
+  border: 0 !important;
+  color: #667085 !important;
+  background: transparent !important;
+  font-size: 24px !important;
 }
-.client-investec.client-login-discovery-demo .client-primary {
+.client-discovery-login-logo { display: block; width: 250px; height: auto; margin-bottom: 28px; }
+.client-discovery-login-card h1 { width: min(340px, 100%); margin: 0 auto 12px; color: #111; font-size: 28px; line-height: 1.2; letter-spacing: -.035em; }
+.client-discovery-login-card > p { width: min(340px, 100%); margin: 0 auto 28px; color: #4f5662; font-size: 14px; }
+.client-discovery-login-card form { display: grid; width: min(340px, 100%); margin-inline: auto; gap: 18px; }
+.client-discovery-login-card label { display: grid; gap: 7px; color: #17181a; font-size: 12px; font-weight: 700; }
+.client-discovery-login-card input { min-height: 48px; border-color: #d2d5da; border-radius: 12px; background: #fff; }
+.client-discovery-login-card .client-primary {
+  min-height: 48px;
+  margin-top: 0;
   border-radius: 999px;
-  background: #e51b35;
-  box-shadow: 0 8px 22px rgba(229,27,53,.2);
+  font-weight: 700;
+  background: #ed1736;
+  box-shadow: 0 10px 24px rgba(237,23,54,.18);
 }
-.client-investec.client-login-discovery-demo .client-primary:hover:not(:disabled) { background: #c9142b; }
+.client-discovery-login-card .client-primary:hover:not(:disabled) { background: #ce102b; }
+.client-discovery-login-card .client-link {
+  display: block;
+  width: min(340px, 100%);
+  min-height: 42px;
+  margin: 18px auto 0;
+  padding: 10px 18px;
+  border: 1px solid #d8dadd;
+  border-radius: 999px;
+  color: #3d4148;
+  background: #fff;
+  text-align: center;
+}
 .client-investec.client-login-discovery-demo button:focus-visible,
 .client-investec.client-login-discovery-demo input:focus-visible { outline-color: #e51b35; }
+@media(max-width:760px) {
+  .client-investec.client-login-discovery-demo { min-height: 100dvh; background-position: 58% center; }
+  .client-discovery-signin { top: 20px; right: 18px; }
+  .client-discovery-login-card { padding: 30px 22px 24px; border-radius: 24px; }
+  .client-discovery-login-logo { width: 205px; margin-bottom: 24px; }
+  .client-discovery-login-card h1 { font-size: 24px; }
+  .client-discovery-login-card input { min-height: 48px; }
+  .client-discovery-login-card .client-primary { min-height: 48px; }
+}
 
 .client-compliance p { font-size: 13px; color: var(--ink-3); }
 .client-compliance-status { font-size: 11px; font-weight: 500; padding: 5px 9px; background: var(--surface-2); border-radius: 3px; }

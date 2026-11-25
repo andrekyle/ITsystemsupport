@@ -41,6 +41,7 @@ export function ClientPortal() {
   const [dashboard, setDashboard] = useState<ClientDashboardData | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loginOpen, setLoginOpen] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(!!supabase);
@@ -258,9 +259,30 @@ export function ClientPortal() {
   const investec = TENANT_ID === 'investec';
   const portalClass = `client-portal${investec ? ' client-investec' : ''} client-tab-${portalTab}`;
   const brand = <div className="client-brand">{investec ? <img className="client-logo-standard" src="/logos/investec.svg" alt="Investec" width="300" height="60" /> : TENANT.logo ? <img src={TENANT.logo} alt={TENANT.name} /> : <strong>{TENANT.name}</strong>}<span>Client portal</span></div>;
-  const loginBrand = investec ? <div className="client-brand"><img className="client-logo-discovery" src="/discovery/FullLighmode.svg" alt="Discovery" width="300" height="82" /><span>Client portal</span></div> : brand;
-  const loginName = investec ? 'Discovery' : TENANT.name;
-  if (!session || recovery) return <main className={`${portalClass} client-login${investec ? ' client-login-discovery-demo' : ''}`}><section className="client-intro">{loginBrand}<span className="client-eyebrow">{loginName.toUpperCase()} / CLIENT ACCESS</span><h1>Your programme.<br />Clear evidence.</h1><p>View your cohort, published evidence, programme reports and B-BBEE compliance documents in one place.</p><small>Provided by Eruditio Skills Development Consultants</small></section><section className="client-login-form"><div><h2>{recovery ? 'Set your password' : `Sign in to ${loginName}`}</h2><p>{recovery ? 'Choose a password for your account.' : 'Use the client account issued by your training provider.'}</p>{!supabase && <p role="alert">Online client access needs to be configured before sign-in is available.</p>}<form onSubmit={signIn}>{!recovery && <label>Email address<input type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required /></label>}<label>Password<PasswordInput id="client-password" value={password} onChange={setPassword} autoComplete={recovery ? 'new-password' : 'current-password'} minLength={recovery ? 12 : undefined} required /></label>{error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}<button className="client-primary" disabled={busy || loading || !supabase}>{busy || loading ? 'Please wait...' : recovery ? 'Save password' : 'Sign in'}</button></form>{!recovery && <button className="client-link" disabled={busy || !supabase} onClick={() => void reset()}>Forgot password?</button>}<p className="client-account-help">Need access? Contact your Eruditio programme administrator.</p></div></section></main>;
+  if ((!session || recovery) && investec) {
+    const showLogin = recovery || loginOpen;
+    return <main className={`${portalClass} client-login-discovery-demo`}>
+      <button className="client-discovery-signin" type="button" onClick={() => setLoginOpen(true)}>Sign in</button>
+      {showLogin && <div className="client-discovery-login-overlay" role="presentation" onMouseDown={event => { if (!recovery && event.target === event.currentTarget) setLoginOpen(false); }}>
+        <section className="client-discovery-login-card" role="dialog" aria-modal="true" aria-labelledby="client-login-title">
+          {!recovery && <button className="client-discovery-login-close" type="button" aria-label="Close sign-in" onClick={() => setLoginOpen(false)}>×</button>}
+          <img className="client-discovery-login-logo" src="/discovery/FullLighmode.svg" alt="Discovery" width="250" height="68" />
+          <h1 id="client-login-title">{recovery ? 'Set your password' : 'Sign in to your account'}</h1>
+          <p>{recovery ? 'Choose a password for your account.' : 'Access your programme, published evidence, reports and compliance documents.'}</p>
+          {!supabase && <p role="alert">Online client access needs to be configured before sign-in is available.</p>}
+          <form onSubmit={signIn}>
+            {!recovery && <label>Email address<input type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} autoFocus required /></label>}
+            <label>Password<PasswordInput id="client-password" value={password} onChange={setPassword} autoComplete={recovery ? 'new-password' : 'current-password'} minLength={recovery ? 12 : undefined} required /></label>
+            {error && <p role="alert">{error}</p>}
+            {notice && <p role="status">{notice}</p>}
+            <button className="client-primary" disabled={busy || loading || !supabase}>{busy || loading ? 'Please wait...' : recovery ? 'Save password' : 'Sign in'}</button>
+          </form>
+          {!recovery && <button className="client-link" disabled={busy || !supabase} onClick={() => void reset()}>Forgot password? Email me a reset link</button>}
+        </section>
+      </div>}
+    </main>;
+  }
+  if (!session || recovery) return <main className={`${portalClass} client-login`}><section className="client-intro">{brand}<span className="client-eyebrow">{TENANT.name.toUpperCase()} / CLIENT ACCESS</span><h1>Your programme.<br />Clear evidence.</h1><p>View your cohort, published evidence, programme reports and B-BBEE compliance documents in one place.</p><small>Provided by Eruditio Skills Development Consultants</small></section><section className="client-login-form"><div><h2>{recovery ? 'Set your password' : `Sign in to ${TENANT.name}`}</h2><p>{recovery ? 'Choose a password for your account.' : 'Use the client account issued by your training provider.'}</p>{!supabase && <p role="alert">Online client access needs to be configured before sign-in is available.</p>}<form onSubmit={signIn}>{!recovery && <label>Email address<input type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required /></label>}<label>Password<PasswordInput id="client-password" value={password} onChange={setPassword} autoComplete={recovery ? 'new-password' : 'current-password'} minLength={recovery ? 12 : undefined} required /></label>{error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}<button className="client-primary" disabled={busy || loading || !supabase}>{busy || loading ? 'Please wait...' : recovery ? 'Save password' : 'Sign in'}</button></form>{!recovery && <button className="client-link" disabled={busy || !supabase} onClick={() => void reset()}>Forgot password?</button>}<p className="client-account-help">Need access? Contact your Eruditio programme administrator.</p></div></section></main>;
   const filtered = documents.filter(doc => (category === 'All' || doc.category === category) && `${doc.title} ${doc.filename}`.toLowerCase().includes(search.toLowerCase()));
   const monthlyReports: Array<{ label: string; key: string; document?: ClientDocument }> = [];
   const starts = learners.map(item => item.start_date).filter(Boolean).sort();
