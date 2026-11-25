@@ -596,6 +596,7 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-portal .client-header { position: sticky; top: 0; z-index: 50; background: var(--surface); }
 .client-investec .client-header .client-brand { width: auto; flex: 1 1 auto; min-width: 0; }
 .client-investec .client-header .client-logo-standard { width: 240px; max-width: 100%; }
+.client-investec .client-header { padding-left: 16px; }
 .client-investec.client-discovery-demo .client-header .client-logo-discovery {
   display: block;
   width: 240px;
@@ -605,6 +606,30 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
   object-fit: contain;
 }
 .client-investec.client-discovery-demo .client-header { padding-left: 16px; }
+.client-investec.client-discovery-demo .client-side-tabs {
+  border-right: 1px solid rgba(255,255,255,.22);
+  background:
+    linear-gradient(155deg, rgba(55,115,194,.94), rgba(25,77,151,.9)),
+    rgba(37,96,176,.88);
+  box-shadow: 10px 0 32px rgba(16,54,109,.16);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+.client-investec.client-discovery-demo .client-side-tabs button {
+  color: rgba(255,255,255,.86);
+}
+.client-investec.client-discovery-demo .client-side-tabs button:hover {
+  color: #fff;
+  background: rgba(255,255,255,.13);
+}
+.client-investec.client-discovery-demo .client-side-tabs button.active {
+  color: #fff;
+  background: rgba(255,255,255,.2);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.16), 0 8px 22px rgba(8,42,94,.12);
+}
+.client-investec.client-discovery-demo .client-side-tabs button:focus-visible {
+  outline-color: rgba(255,255,255,.9);
+}
 .client-investec.client-discovery-demo .client-page-heading h1 { font-size: 0; }
 .client-investec.client-discovery-demo .client-page-heading h1::after {
   content: "Discovery evidence hub";
