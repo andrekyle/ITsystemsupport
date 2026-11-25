@@ -604,6 +604,7 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
   aspect-ratio: auto;
   object-fit: contain;
 }
+.client-investec.client-discovery-demo .client-header { padding-left: 16px; }
 .client-investec.client-discovery-demo .client-page-heading h1 { font-size: 0; }
 .client-investec.client-discovery-demo .client-page-heading h1::after {
   content: "Discovery evidence hub";
