@@ -462,6 +462,63 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-investec .client-intro > .client-eyebrow { background: transparent; padding: 0; margin: 0; }
 @media(max-width:760px) { .client-investec .client-brand { gap: 12px; } .client-investec .client-brand > span { margin-bottom: 2px; } }
 
+/* Cosmetic Discovery demonstration for the logged-out Investec client URL only. */
+.client-investec.client-login-discovery-demo {
+  --client-accent: #e51b35;
+  --ink: #101a34;
+  --ink-3: #667085;
+}
+.client-investec.client-login-discovery-demo .client-intro {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #101a34;
+  border-right: 0;
+  background: #f7f8fa url("/discovery/Discovery Learning Hero Banner.png") center / cover no-repeat;
+}
+.client-investec.client-login-discovery-demo .client-intro::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, rgba(255,255,255,.94), rgba(255,255,255,.64));
+}
+.client-investec.client-login-discovery-demo .client-brand .client-logo-discovery {
+  width: min(320px, 100%);
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+.client-investec.client-login-discovery-demo .client-brand > span { color: #667085; }
+.client-investec.client-login-discovery-demo .client-intro > .client-eyebrow {
+  color: #bd8e4f;
+  font-weight: 700;
+  letter-spacing: .16em;
+}
+.client-investec.client-login-discovery-demo .client-intro h1 {
+  color: #101a34;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 600;
+}
+.client-investec.client-login-discovery-demo .client-intro p { color: #586174; opacity: 1; }
+.client-investec.client-login-discovery-demo .client-login-form {
+  border-left: 0;
+  background: #fff;
+}
+.client-investec.client-login-discovery-demo .client-login-form h2 {
+  color: #101a34;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 650;
+}
+.client-investec.client-login-discovery-demo .client-primary {
+  border-radius: 999px;
+  background: #e51b35;
+  box-shadow: 0 8px 22px rgba(229,27,53,.2);
+}
+.client-investec.client-login-discovery-demo .client-primary:hover:not(:disabled) { background: #c9142b; }
+.client-investec.client-login-discovery-demo button:focus-visible,
+.client-investec.client-login-discovery-demo input:focus-visible { outline-color: #e51b35; }
+
 .client-compliance p { font-size: 13px; color: var(--ink-3); }
 .client-compliance-status { font-size: 11px; font-weight: 500; padding: 5px 9px; background: var(--surface-2); border-radius: 3px; }
 
