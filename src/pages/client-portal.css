@@ -549,6 +549,11 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 }
 .client-investec.client-login-discovery-demo button:focus-visible,
 .client-investec.client-login-discovery-demo input:focus-visible { outline-color: #e51b35; }
+.client-investec.client-login-discovery-demo .client-discovery-login-card input:focus-visible {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 1px #0078d4;
+}
 @media(max-width:760px) {
   .client-investec.client-login-discovery-demo { min-height: 100dvh; background-position: 58% center; }
   .client-discovery-signin { top: 20px; right: 18px; }
@@ -591,6 +596,19 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-portal .client-header { position: sticky; top: 0; z-index: 50; background: var(--surface); }
 .client-investec .client-header .client-brand { width: auto; flex: 1 1 auto; min-width: 0; }
 .client-investec .client-header .client-logo-standard { width: 240px; max-width: 100%; }
+.client-investec.client-discovery-demo .client-header .client-logo-discovery {
+  display: block;
+  width: 240px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+.client-investec.client-discovery-demo .client-page-heading h1 { font-size: 0; }
+.client-investec.client-discovery-demo .client-page-heading h1::after {
+  content: "Discovery evidence hub";
+  font-size: 30px;
+}
 .client-portal .client-user-menu { flex: 0 0 auto; gap: 16px; }
 .client-user-menu > span { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .client-portal button { white-space: nowrap; line-height: 1.4; min-height: 36px; padding: 8px 16px; font-size: 13px; font-weight: 500; }
