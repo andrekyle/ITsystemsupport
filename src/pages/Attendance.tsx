@@ -18,7 +18,6 @@ import { ConfirmModal } from "../components/Modal";
 import { FitSheet } from "../components/FitSheet";
 import { DateTimePicker } from "../components/DateTimePicker";
 import { DocumentSignature } from "../components/DocumentSignature";
-import { Select } from "../components/Select";
 import { flushKey, hasPendingCloudWrite, writeFromCloud } from "../lib/sync";
 
 /**
@@ -1043,7 +1042,16 @@ export function AttendancePage({
 
       <div className="att-controls no-print">
         <div className="att-control-row">
-          <div className="att-menu-items" role="toolbar" aria-label="Attendance register actions">
+          <div className="att-menu-cluster">
+            <button
+              className="btn primary sm att-sign-button"
+              aria-pressed={signed}
+              disabled={!canSign || signing}
+              onClick={onSignClick}
+            >
+              {signing ? "Signing…" : signed ? "Signed" : "Sign the register"}
+            </button>
+            <div className="att-menu-items" role="toolbar" aria-label="Attendance register actions">
             <div className="att-date-control">
               <DateTimePicker
                 id="att-session-date"
@@ -1053,43 +1061,30 @@ export function AttendancePage({
                 onChange={(v) => v && setDateIso(v)}
               />
             </div>
-            {staff && savedDates.length > 0 && (
-              <Select
-                className="att-saved-dates"
-                ariaLabel="Open a saved register"
-                value=""
-                placeholder="Open register"
-                buttonLabel={<Icon name="folder" size={15} />}
-                options={savedDates.map(date => ({ value: date, label: date }))}
-                onChange={(date) => { if (date) setDateIso(date); }}
-              />
-            )}
-            <button className="btn ghost sm" aria-label="Refresh register" title="Refresh register" disabled={refreshing || signing} onClick={() => void refresh()}>
+            <button className="btn ghost sm" aria-label="Refresh register" data-tooltip="Refresh register" disabled={refreshing || signing} onClick={() => void refresh()}>
               <Icon name="refresh" size={15} /> {refreshing ? "Refreshing…" : "Refresh"}
             </button>
-            <button className="btn ghost sm att-sign-action" aria-pressed={signed} aria-label={signed ? "Register signed" : "Sign the register"} title={signed ? "Register signed" : "Sign the register"} disabled={!canSign || signing} onClick={onSignClick}>
-              <Icon name="checkCircle" size={15} /> {signing ? "Signing…" : signed ? "Signed" : "Sign the register — I'm here"}
-            </button>
             {staff && (
-              <button className="btn ghost sm" aria-label="Download register as PDF" title="Download as PDF" onClick={() => void printLandscape()}>
+              <button className="btn ghost sm" aria-label="Download register as PDF" data-tooltip="Download as PDF" onClick={() => void printLandscape()}>
                 <Icon name="document" size={15} /> Download as PDF
               </button>
             )}
             {staff && (
-              <button className="btn ghost sm" aria-label="Download registers" title="Download registers" disabled={loadingAll} onClick={() => void downloadAll()}>
+              <button className="btn ghost sm" aria-label="Download registers" data-tooltip="Download registers" disabled={loadingAll} onClick={() => void downloadAll()}>
                 <Icon name="cloudDownload" size={15} /> {loadingAll ? "Gathering registers…" : "Download registers…"}
               </button>
             )}
             {staff && (
-              <button className="btn ghost sm" aria-label="Fix signatures" title="Fix signatures" disabled={fixingSig} onClick={() => void fixSignatures()}>
+              <button className="btn ghost sm" aria-label="Fix signatures" data-tooltip="Fix signatures" disabled={fixingSig} onClick={() => void fixSignatures()}>
                 <Icon name="wrench" size={15} /> {fixingSig ? "Cleaning…" : "Fix signatures"}
               </button>
             )}
             {isAdminRole(profile.role) && (
-              <button className="btn ghost sm danger" aria-label="Clear register" title="Clear register" onClick={() => setConfirming({ kind: "register" })}>
+              <button className="btn ghost sm danger" aria-label="Clear register" data-tooltip="Clear register" onClick={() => setConfirming({ kind: "register" })}>
                 <Icon name="trash" size={15} /> Clear register
               </button>
             )}
+            </div>
           </div>
           {(fixNote || attendanceNote || (staff && !Object.keys(reg.rows).length && savedDates.length > 0) || signed) && (
             <div className="att-control-status" role="status" aria-live="polite">

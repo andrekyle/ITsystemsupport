@@ -54,6 +54,50 @@
 [data-theme="light"] .evidence-register-page .portfolio-content { border: 0; border-radius: 0; box-shadow: none; }
 [data-theme="light"] .evidence-register-page .portfolio-content > .section-title { border-bottom: 0; padding-bottom: 0; margin-bottom: 16px; }
 [data-theme="light"] .evidence-register-page .portfolio-content > .card { border: 0; border-radius: 0; box-shadow: none; padding: 0; }
+[data-theme="dark"] .evidence-register-page {
+  --portfolio-line: #4b5563;
+  --portfolio-muted: #c2c9d3;
+}
+[data-theme="dark"] .evidence-register-page .evidence-register-profile {
+  border-bottom-color: var(--portfolio-line);
+}
+[data-theme="dark"] .evidence-register-page .evidence-register-avatar {
+  border-color: #1d1d1f;
+  background: #64748b;
+  color: #fff !important;
+}
+[data-theme="dark"] .evidence-register-page .evidence-register-profile p,
+[data-theme="dark"] .evidence-register-page .evidence-register-toolbar > [role="status"] {
+  color: #b8c1ce;
+}
+[data-theme="dark"] .evidence-register-page .evidence-register-toolbar {
+  border-top-color: var(--portfolio-line);
+}
+[data-theme="dark"] .evidence-register-page .evidence-register-toolbar .nice-select-btn {
+  border-color: #697386;
+  background: #f7f8fa;
+  color: #20242a;
+}
+[data-theme="dark"] .evidence-register-page .evidence-register-toolbar .nice-select-btn:disabled {
+  color: #4b5563;
+  opacity: 1;
+}
+[data-theme="dark"] .evidence-register-page .evidence-register-toolbar .nice-select-btn:disabled .nice-select-chev {
+  color: #6b7280;
+}
+[data-theme="dark"] .evidence-register-page .evidence-register-toolbar .btn.ghost,
+[data-theme="dark"] .evidence-register-page .evidence-register-tabs .btn.ghost {
+  color: #e1e6ed;
+}
+[data-theme="dark"] .evidence-register-page .evidence-register-toolbar .btn:disabled {
+  color: #aeb7c4;
+  opacity: 1;
+}
+[data-theme="dark"] .evidence-register-page .evidence-register-toolbar .btn.primary:disabled {
+  border-color: #315d9d;
+  background: #234c86;
+  color: #dbe8fb;
+}
 .evidence-register-page .portfolio-brand { width: 190px; height: auto; margin-bottom: 14px; }
 .evidence-register-page .portfolio-brand-dark { display: none; }
 [data-theme="dark"] .evidence-register-page .portfolio-brand-light { display: none; }
@@ -109,7 +153,7 @@
   font-weight: 600;
   line-height: 1.2;
 }
-.evidence-register-shell { box-sizing: border-box; width: calc(100% - 24px); max-width: none; margin: 0 auto; padding-left: 12px; }
+.evidence-register-shell { box-sizing: border-box; width: calc(100% - 24px); max-width: none; margin: 0 auto; padding-inline: 40px; }
 .evidence-register-profile {
   display: flex;
   align-items: center;
@@ -176,7 +220,7 @@
   .evidence-register-page .evidence-register-banner { height: 108px; padding: 16px 18px; }
   .evidence-register-page .evidence-register-banner::before { right: 0; width: 48%; }
   .evidence-register-page .evidence-register-banner::after { width: 32%; }
-  .evidence-register-shell { width: calc(100% - 20px); padding-left: 8px; }
+  .evidence-register-shell { width: calc(100% - 20px); padding-inline: 40px; }
   .evidence-register-profile { gap: 10px; min-height: 78px; margin-top: 0; padding-bottom: 14px; }
   .evidence-register-avatar { flex-basis: 76px; width: 76px; height: 76px; font-size: 21px; }
   .evidence-register-profile h2 { margin-top: 18px; font-size: 18px; overflow-wrap: anywhere; }

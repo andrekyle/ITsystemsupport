@@ -11958,6 +11958,11 @@ table.data tr.done-row .text-link {
   margin-top: 28px;
 }
 
+.attendance-page > .sheet-fit > .sheet-fit-mid {
+  position: relative;
+  left: var(--attendance-content-offset);
+}
+
 .sheet-fit-mid {
   margin: 0 auto;
   overflow: hidden;
@@ -12131,6 +12136,8 @@ table.data tr.done-row .text-link {
 
 /* the paper sheet — always white, black ink, like the printed form */
 .att-sheet {
+  box-sizing: border-box;
+  width: 100%;
   background: #fff;
   color: #111;
   border: 0;
@@ -20206,6 +20213,9 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 
 /* Attendance register heading and actions mirror the evidence-register visual language.
    These selectors are intentionally scoped to the attendance page only. */
+.attendance-page {
+  --attendance-content-offset: min(60px, 5.66%);
+}
 .attendance-page .attendance-register-banner {
   position: relative;
   display: flex;
@@ -20271,15 +20281,61 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   overflow: visible;
 }
 .attendance-page .att-control-row {
+  position: relative;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-sizing: border-box;
   width: 100%;
-  max-width: 1060px;
-  margin: 0 auto;
-  padding-inline: min(34px, 3.207547%);
+  max-width: none;
+  margin: 0;
+  padding: 0 34px 0 123px;
   gap: 12px;
+}
+.attendance-page .att-menu-cluster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: 100%;
+  flex: 0 1 auto;
+}
+.attendance-page .att-sign-button {
+  position: static;
+  flex: 0 0 auto;
+  width: 138px !important;
+  min-width: 138px;
+  justify-content: center;
+  text-align: center;
+  height: 38px;
+  min-height: 38px !important;
+  padding: 0 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.attendance-page .att-sign-button[aria-pressed="true"]:disabled {
+  border-color: var(--azure);
+  color: #fff;
+  background: var(--azure);
+  opacity: 1;
+  cursor: default;
+}
+[data-theme="dark"] .attendance-page .att-sign-button {
+  border-color: #278cff;
+  color: #fff;
+  background: #0878e8;
+  box-shadow: none;
+}
+[data-theme="dark"] .attendance-page .att-sign-button:hover:not(:disabled) {
+  border-color: #4aa0ff;
+  color: #fff;
+  background: #1687f5;
+}
+[data-theme="dark"] .attendance-page .att-sign-button[aria-pressed="true"]:disabled {
+  border-color: #278cff;
+  color: #fff;
+  background: #0878e8;
 }
 .attendance-page .att-menu-items {
   display: flex;
@@ -20290,12 +20346,11 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   flex: 0 1 auto;
   padding: 4px 8px 4px 12px;
   gap: 2px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  border: 1px solid rgba(7, 84, 201, .2);
-  border-radius: 999px;
-  background: rgba(7, 84, 201, .12);
-  box-shadow: 0 6px 16px rgba(0, 74, 173, .08);
+  overflow: visible;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(7, 84, 201, .035);
+  box-shadow: 0 3px 10px rgba(0, 74, 173, .035);
 }
 .attendance-page .att-menu-items::-webkit-scrollbar { display: none; }
 .attendance-page .att-menu-items > * {
@@ -20338,8 +20393,33 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
 .attendance-page .att-menu-items .nice-select-chev { display: none; }
 .attendance-page .att-menu-items .nice-select-btn svg { margin: 0; }
 .attendance-page .att-menu-items button svg { width: 18px; height: 18px; margin: 0; stroke-width: 1.35; }
-.attendance-page .att-menu-items .att-sign-action[aria-pressed="true"] { background: transparent; color: #0754c9; }
-.attendance-page .att-menu-items .att-sign-action[aria-pressed="true"] svg { color: #0754c9; }
+.attendance-page .att-menu-items [data-tooltip] { position: relative; }
+.attendance-page .att-menu-items [data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 8px);
+  left: 50%;
+  width: max-content;
+  max-width: 180px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.3;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -2px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.attendance-page .att-menu-items [data-tooltip]:is(:hover, :focus-visible)::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
 .attendance-page .att-menu-items :is(.btn, .dtp-btn, .nice-select-btn):focus,
 .attendance-page .att-menu-items :is(.btn, .dtp-btn, .nice-select-btn).open {
   outline: 0;
@@ -20387,9 +20467,8 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   z-index: 30;
 }
 [data-theme="dark"] .attendance-page .att-menu-items {
-  border-color: rgba(148, 193, 255, .24);
-  background: rgba(148, 193, 255, .08);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, .24);
+  background: rgba(148, 193, 255, .025);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .12);
 }
 [data-theme="dark"] .attendance-page .att-menu-items :is(.btn, .dtp-btn, .nice-select-btn),
 [data-theme="dark"] .attendance-page .att-menu-items :is(.btn, .dtp-btn, .nice-select-btn) svg,
@@ -20408,6 +20487,7 @@ select:hover, select:focus { border-color: var(--border-2, var(--border)) !impor
   .attendance-page .att-control-row {
     align-items: flex-start;
     flex-wrap: wrap;
+    padding-inline: 18px;
   }
   .attendance-page .att-control-status {
     flex: 1 1 100%;
