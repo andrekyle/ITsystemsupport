@@ -222,6 +222,15 @@ async function pullLatest(key: string, strict = false): Promise<AttData | null> 
     for (const [profileId, localRow] of Object.entries(local.rows)) {
       const cloudRow = merged.rows[profileId];
       if (!cloudRow) {
+        // Once this register's legacy rows have been migrated, absence from
+        // the cloud is authoritative. Re-merging an old device cache here
+        // would resurrect a learner that staff deliberately removed.
+        const rowKey = attRowKey(dateIso, profileId);
+        const migrationComplete = !!localStorage.getItem(attendanceMigrationKey(dateIso));
+        if (migrationComplete && !hasPendingCloudWrite(rowKey)) {
+          localStorage.removeItem(rowKey);
+          continue;
+        }
         merged.rows[profileId] = localRow;
         if (!merged.order.includes(profileId)) merged.order.push(profileId);
         continue;
@@ -848,19 +857,35 @@ export function AttendancePage({
     localStorage.setItem(attRowKey(dateIso, pid), JSON.stringify(row));
   };
 
-  const clearRow = (pid: string) => {
+  const clearRow = async (pid: string) => {
     const rows = { ...reg.rows };
     delete rows[pid];
+    const rowKey = attRowKey(dateIso, pid);
     save({ ...reg, rows, order: reg.order.filter((id) => id !== pid) });
-    localStorage.removeItem(attRowKey(dateIso, pid));
+    localStorage.removeItem(rowKey);
+    try {
+      // A destructive edit must reach the cloud before a refresh or export
+      // can pull the former row back into this device's register cache.
+      await Promise.all([flushKey(rowKey, true), flushKey(storageKey, true)]);
+      setAttendanceNote("Learner removed from this register.");
+    } catch (error) {
+      console.error("Attendance row deletion is waiting to sync:", error);
+      setAttendanceNote("Learner removed on this device. Cloud deletion is pending — keep this page open and tap Refresh when online.");
+    }
   };
 
   /** Super user only: wipe the whole register for the selected date. */
-  const clearRegister = () => {
-    for (const pid of Object.keys(reg.rows)) {
-      localStorage.removeItem(attRowKey(dateIso, pid));
-    }
+  const clearRegister = async () => {
+    const rowKeys = Object.keys(reg.rows).map((pid) => attRowKey(dateIso, pid));
+    for (const rowKey of rowKeys) localStorage.removeItem(rowKey);
     save(EMPTY);
+    try {
+      await Promise.all([...rowKeys.map((rowKey) => flushKey(rowKey, true)), flushKey(storageKey, true)]);
+      setAttendanceNote("Register cleared.");
+    } catch (error) {
+      console.error("Attendance register deletion is waiting to sync:", error);
+      setAttendanceNote("Register cleared on this device. Cloud deletion is pending — keep this page open and tap Refresh when online.");
+    }
   };
 
   /** Print with a landscape @page rule injected for the duration of the dialog.
@@ -998,9 +1023,10 @@ export function AttendancePage({
 
   const onConfirm = () => {
     if (!confirming) return;
-    if (confirming.kind === "register") clearRegister();
-    else clearRow(confirming.pid);
+    const action = confirming;
     setConfirming(null);
+    if (action.kind === "register") void clearRegister();
+    else void clearRow(action.pid);
   };
 
   // students only sign; the register itself is edited by staff
