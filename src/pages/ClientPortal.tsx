@@ -260,7 +260,7 @@ export function ClientPortal() {
   const discoveryDemo = /^\/clients\/discovery-demo(?:\/|$)/.test(window.location.pathname);
   const portalClass = `client-portal${investec ? ' client-investec' : ''}${discoveryDemo ? ' client-discovery-demo' : ''} client-tab-${portalTab}`;
   const brand = <div className="client-brand">{discoveryDemo ? <img className="client-logo-discovery" src="/discovery/FullLighmode.svg" alt="Discovery" width="300" height="82" /> : investec ? <img className="client-logo-standard" src="/logos/investec.svg" alt="Investec" width="300" height="60" /> : TENANT.logo ? <img src={TENANT.logo} alt={TENANT.name} /> : <strong>{TENANT.name}</strong>}<span>Client portal</span></div>;
-  if ((!session || recovery) && investec) {
+  if ((!session || recovery) && discoveryDemo) {
     const showLogin = recovery || loginOpen;
     return <main className={`${portalClass} client-login-discovery-demo`}>
       <button className="client-discovery-signin" type="button" onClick={() => setLoginOpen(true)}>Sign in</button>

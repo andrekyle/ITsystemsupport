@@ -460,6 +460,15 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-investec .client-brand > span { line-height: 1.4; margin: 0 0 3px; padding: 0; }
 .client-investec .client-intro .client-brand { margin-bottom: 28px; }
 .client-investec .client-intro > .client-eyebrow { background: transparent; padding: 0; margin: 0; }
+.client-investec.client-login:not(.client-login-discovery-demo) .client-intro::after {
+  display: block;
+  width: min(300px, 72%);
+  height: 230px;
+  margin-top: clamp(12px, 2vh, 24px);
+  content: "";
+  background: url("/logos/investec-zebra.png") center / contain no-repeat;
+  transform: scaleX(-1);
+}
 @media(max-width:760px) { .client-investec .client-brand { gap: 12px; } .client-investec .client-brand > span { margin-bottom: 2px; } }
 
 /* Cosmetic Discovery demonstration for the logged-out Investec client URL only. */
@@ -651,6 +660,26 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-side-tabs .client-ai-tab.active {
  background: rgba(0,0,0,.06);
  color: #101828;
+}
+body:has(.client-document-viewer) .client-investec.client-discovery-demo .client-side-tabs button,
+body:has(.client-portal.client-tab-cohort .client-checklist-editor) .client-investec.client-discovery-demo .client-side-tabs button {
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 0;
+}
+body:has(.client-document-viewer) .client-investec.client-discovery-demo .client-side-tabs button.active,
+body:has(.client-portal.client-tab-cohort .client-checklist-editor) .client-investec.client-discovery-demo .client-side-tabs button.active {
+  background: transparent;
+  box-shadow: none;
+}
+body:has(.client-document-viewer) .client-investec.client-discovery-demo .client-side-tabs .client-tab-icon,
+body:has(.client-portal.client-tab-cohort .client-checklist-editor) .client-investec.client-discovery-demo .client-side-tabs .client-tab-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  margin: 0;
+  stroke-width: 1.6;
 }
 .client-tab-assistant .client-page-heading,
 .client-tab-assistant .client-preview-notice { display: none; }
