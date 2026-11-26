@@ -15,6 +15,7 @@ import { supabase } from "./supabase";
 import { REPORT_DIALOG_SCRIPT } from "./dialogs";
 import { buildLearnerAttendanceRecords } from "./reportAttendance";
 import { learnerAttendanceStartDate } from "./learnerDates";
+import { parseSessionDates } from "./integrations";
 
 /**
  * AI report generation (super user only): builds a compact statistics bundle
@@ -302,6 +303,24 @@ function scopedUnits(rows: LearnerRow[], scope: ReportScope) {
   return units.length ? units : MODULES[0].units;
 }
 
+function currentMonthRequested(question?: string): boolean {
+  return /\b(?:this|current)\s+month\b|\bmonthly\b|\bmonth\s+only\b/i.test(question ?? "");
+}
+
+function isInMonth(date: Date, month: Date): boolean {
+  return date.getFullYear() === month.getFullYear() && date.getMonth() === month.getMonth();
+}
+
+/** Units scheduled for delivery this month, preserved under their module headings. */
+function currentMonthModules(now = new Date()) {
+  return MODULES.map((module) => ({
+    name: module.name,
+    units: module.units.filter((unit) =>
+      parseSessionDates(unit.dates, unit.time).some((session) => isInMonth(session.start, now))
+    ),
+  })).filter((module) => module.units.length > 0);
+}
+
 function outcomesData(rows: LearnerRow[], scope: ReportScope = "worked") {
   const outcomes = loadOutcomes();
   const units = scopedUnits(rows, scope);
@@ -469,29 +488,64 @@ export function buildReportData(
     case "outcomes":
       return { ...base, unitOutcomes: outcomesData(rows, scope) };
     case "tracker": {
-      const units = new Set(scopedUnits(rows, scope).map((u) => u.us));
+      const monthly = currentMonthRequested(question);
+      const now = new Date();
+      const monthlyModules = monthly ? currentMonthModules(now) : [];
+      const selectedUnits = monthly && monthlyModules.length
+        ? monthlyModules.flatMap((module) => module.units)
+        : scopedUnits(rows, scope);
+      const units = new Set(selectedUnits.map((u) => u.us));
+      const trackerSessions = monthly
+        ? sessions.filter((session) => isInMonth(new Date(`${session.date}T12:00:00`), now))
+        : sessions;
+      const trackerDates = trackerSessions.map((session) => session.date);
+      const trackerDateSet = new Set(trackerDates);
       return {
         ...base,
+        scope: monthly
+          ? "current calendar month and only the module units scheduled in that month"
+          : base.scope,
+        schedule: monthly
+          ? monthlyModules.flatMap((module) => module.units.map((unit) =>
+              `US ${unit.us} | ${unit.title} | ${module.name} | sessions: ${unit.dates} | ${unit.time}`
+            ))
+          : base.schedule,
         instruction:
-          "Write one facilitator comment per learner (2-3 sentences) from their figures below. Attendance comes from the filled registers: sessionsExpected only counts sessions from the learner's firstSession onwards, so a learner who joined later but attended every session since is at 100% — never describe that as missing classes.",
-        registerDates: attendanceFilledRegisterDates(),
-        learners: rows.map((r) => ({
-          name: r.profile.name,
-          gender: genderOf(r),
-          pronouns: pronounsOf(r),
-          completionPct: Math.round(r.completion * 100),
-          quizAvgPct: pctStr(r.quizAvg),
-          attendanceRatePct: pctStr(r.attendanceRate),
-          sessionsAttended: r.attendance,
-          sessionsExpected: r.attendanceExpected,
-          firstSession: learnerAttendanceStartDate(r.profile.enrolment?.signedDate, r.signedDates[0]),
-          unitStatus: Object.fromEntries(
-            Object.entries(r.unitStatus).filter(([us]) => units.has(us))
-          ),
-          atRisk: r.atRisk,
-          riskReasons: r.riskReasons,
-          lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
+          `Write one facilitator comment per learner (2-3 sentences) from their figures below. ${monthly ? "This is a current-month report: mention only the supplied current-month attendance and current module units; do not discuss earlier months or other units. " : ""}Attendance comes from the filled registers: sessionsExpected only counts sessions from the learner's firstSession onwards, so a learner who joined later but attended every session since is at 100% — never describe that as missing classes.`,
+        reportingPeriod: monthly
+          ? `current calendar month (${now.toLocaleString("en-GB", { month: "long", year: "numeric" })}) only`
+          : "all available records",
+        currentModules: monthlyModules.map((module) => ({
+          name: module.name,
+          units: module.units.map((unit) => ({ us: unit.us, title: unit.title })),
         })),
+        registeredAttendanceDates: trackerDates,
+        registeredSessions: trackerSessions.map(({ signedProfileIds: _signedProfileIds, ...session }) => session),
+        sessionAttendance: trackerSessions.map((session) => ({ date: session.date, signed: session.signed, expected: session.expected })),
+        registerDates: trackerDates,
+        learners: rows.map((r) => {
+          const record = attendanceRecords.find((item) => item.profileId === r.profile.id);
+          const learnerSessions = record?.sessions.filter((session) => trackerDateSet.has(session.date)) ?? [];
+          const sessionsAttended = learnerSessions.filter((session) => session.status === "Present").length;
+          const sessionsExpected = learnerSessions.length;
+          return {
+            name: r.profile.name,
+            gender: genderOf(r),
+            pronouns: pronounsOf(r),
+            completionPct: Math.round(r.completion * 100),
+            quizAvgPct: pctStr(r.quizAvg),
+            attendanceRatePct: sessionsExpected ? Math.round((sessionsAttended / sessionsExpected) * 100) : null,
+            sessionsAttended,
+            sessionsExpected,
+            firstSession: learnerAttendanceStartDate(r.profile.enrolment?.signedDate, r.signedDates[0]),
+            unitStatus: Object.fromEntries(
+              Object.entries(r.unitStatus).filter(([us]) => units.has(us))
+            ),
+            atRisk: r.atRisk,
+            riskReasons: r.riskReasons,
+            lastSeen: r.lastLogin ? new Date(r.lastLogin).toLocaleDateString() : "never signed in",
+          };
+        }),
       };
     }
     case "custom":
@@ -864,17 +918,27 @@ function fmtRegDay(iso: string): string {
 
 /** Tracker grid: legend + one row per learner with unit statuses, attendance
  *  ticks and the AI's per-learner comment — onboarding palette throughout. */
-function trackerBody(rows: LearnerRow[], report: AiReport, scope: ReportScope): string {
+function trackerBody(
+  rows: LearnerRow[],
+  report: AiReport,
+  scope: ReportScope,
+  question?: string,
+  sharedRegisters: ReportRegisterSession[] = []
+): string {
   // scope "worked": only unit standards someone has started — grouped per
   // module so the grid stays the width of the real tracker
+  const monthly = currentMonthRequested(question);
+  const now = new Date();
   const worked = workedUnitCodes(rows);
-  let mods = MODULES.map((m) => ({
+  let mods = monthly ? currentMonthModules(now) : MODULES.map((m) => ({
     name: m.name,
     units: scope === "all" ? m.units : m.units.filter((u) => worked.has(u.us)),
   })).filter((m) => m.units.length > 0);
   if (mods.length === 0) mods = [{ name: MODULES[0].name, units: MODULES[0].units }];
   const units = mods.flatMap((m) => m.units);
-  const dates = attendanceFilledRegisterDates();
+  const dates = scheduledSessions(rows, sharedRegisters)
+    .map((session) => session.date)
+    .filter((date) => !monthly || isInMonth(new Date(`${date}T12:00:00`), now));
   const commentFor = (name: string) => {
     const hit = report.sections.find(
       (s) => s.heading.trim().toLowerCase() === name.trim().toLowerCase()
@@ -950,7 +1014,8 @@ export function reportDocumentHtml(
   registers: number,
   author: Profile,
   question?: string,
-  scope: ReportScope = "worked"
+  scope: ReportScope = "worked",
+  sharedRegisters: ReportRegisterSession[] = []
 ): string {
   const today = new Date().toLocaleDateString(undefined, {
     day: "numeric",
@@ -959,7 +1024,7 @@ export function reportDocumentHtml(
   });
   const tracker = kind.id === "tracker";
   const sections = tracker
-    ? trackerBody(rows, report, scope)
+    ? trackerBody(rows, report, scope, question, sharedRegisters)
     : report.sections
         .map(
           (s, i) => `
@@ -1175,7 +1240,7 @@ export function openReportDocument(
     if (result.deck) {
       html = deckDocumentHtml(kind, normaliseManagementDeck(kind, result.deck, rows, question, sharedRegisters), rows, author, await eruditioLogoDataUrl());
     } else if (result.report) {
-      html = reportDocumentHtml(kind, result.report, rows, registers, author, question, scope);
+      html = reportDocumentHtml(kind, result.report, rows, registers, author, question, scope, sharedRegisters);
     } else {
       win.close();
       return;

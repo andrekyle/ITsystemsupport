@@ -509,7 +509,7 @@ async function handler(req: Request): Promise<Response> {
             continue;
           }
         }
-        const monthly = /\bthis month\b|\bmonthly\b|\bmonth only\b/i.test(question);
+        const monthly = /\b(?:this|current)\s+month\b|\bmonthly\b|\bmonth\s+only\b/i.test(question);
         const today = new Date(str(reference?.today));
         const monthSessions = monthly && !Number.isNaN(today.getTime()) && Array.isArray(reference?.registeredSessions)
           ? reference.registeredSessions
