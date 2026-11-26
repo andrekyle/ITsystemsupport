@@ -16,6 +16,7 @@ import { REPORT_DIALOG_SCRIPT } from "./dialogs";
 import { buildLearnerAttendanceRecords } from "./reportAttendance";
 import { learnerAttendanceStartDate } from "./learnerDates";
 import { parseSessionDates } from "./integrations";
+import { COURSES } from "../data/courses";
 
 /**
  * AI report generation (super user only): builds a compact statistics bundle
@@ -311,6 +312,27 @@ function isInMonth(date: Date, month: Date): boolean {
   return date.getFullYear() === month.getFullYear() && date.getMonth() === month.getMonth();
 }
 
+/** Saved built-in course overrides may contain only the currently delivered
+ * units. Recombine them with the qualification baseline so a module tracker
+ * always shows the module's complete unit list while retaining edited fields. */
+function completeModule(module: (typeof MODULES)[number]) {
+  const baselineCourse = COURSES.find((course) => course.meta.saqaId === COURSE_META.saqaId);
+  const baseline = baselineCourse?.modules.find((candidate) =>
+    candidate.id === module.id || candidate.name.trim().toLowerCase() === module.name.trim().toLowerCase()
+  );
+  if (!baseline) return module;
+  const currentByCode = new Map(module.units.map((unit) => [unit.us, unit]));
+  const baselineCodes = new Set(baseline.units.map((unit) => unit.us));
+  return {
+    ...baseline,
+    ...module,
+    units: [
+      ...baseline.units.map((unit) => ({ ...unit, ...currentByCode.get(unit.us) })),
+      ...module.units.filter((unit) => !baselineCodes.has(unit.us)),
+    ],
+  };
+}
+
 /** Pick the single module currently being delivered, then expose all its units.
  *  The most recent session this month wins; before the first session, use the
  *  nearest upcoming module. This keeps tracker reports to one complete module. */
@@ -330,7 +352,9 @@ function currentMonthModules(now = new Date()) {
     .map((candidate) => ({ candidate, date: candidate.sessions.find((date) => date > now)! }))
     .filter((item) => !!item.date)
     .sort((a, b) => a.date.getTime() - b.date.getTime())[0]?.candidate;
-  return selected ? [{ name: selected.module.name, units: selected.module.units }] : [];
+  if (!selected) return [];
+  const module = completeModule(selected.module);
+  return [{ name: module.name, units: module.units }];
 }
 
 function outcomesData(rows: LearnerRow[], scope: ReportScope = "worked") {
