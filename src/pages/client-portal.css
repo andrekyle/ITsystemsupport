@@ -621,9 +621,16 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
   box-shadow: 10px 0 32px rgba(16,54,109,.16);
   backdrop-filter: blur(18px) saturate(135%);
   -webkit-backdrop-filter: blur(18px) saturate(135%);
+  font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif;
 }
 .client-investec.client-discovery-demo .client-side-tabs button {
   color: rgba(255,255,255,.86);
+  font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.client-investec.client-discovery-demo .client-side-tabs .client-tab-icon {
+  stroke-width: 1.75;
 }
 .client-investec.client-discovery-demo .client-side-tabs button:hover {
   color: #fff;
