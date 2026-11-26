@@ -617,7 +617,7 @@ body:has(.client-document-viewer) .client-portal .client-content { padding-left:
 .client-investec.client-discovery-demo .client-header { padding-left: 16px; }
 .client-investec.client-discovery-demo .client-side-tabs {
   border-right: 1px solid rgba(255,255,255,.22);
-  background: #002147;
+  background: #0047bb;
   box-shadow: 10px 0 32px rgba(16,54,109,.16);
   backdrop-filter: blur(18px) saturate(135%);
   -webkit-backdrop-filter: blur(18px) saturate(135%);

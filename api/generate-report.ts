@@ -6,8 +6,7 @@
  * write a professional narrative report. Returns structured JSON the client
  * renders into the printable onboarding-pack-styled document.
  *
- * Runs on Vercel's Node.js runtime to allow non-streaming report generation
- * to complete beyond the Edge runtime's response-start limit.
+ * Runs on Vercel's Edge runtime, matching its Web Request/Response handler.
  * Requires the `OPENAI_API_KEY` env var.
  */
 import { fetchWithServiceRetry, reportServiceError } from "../src/lib/aiServiceErrors";
@@ -23,7 +22,7 @@ import {
   sanitizeAssistantData,
 } from "../src/lib/assistantPrivacy";
 
-export const config = { maxDuration: 60 };
+export const config = { runtime: "edge" };
 
 declare const process: { env?: Record<string, string | undefined> } | undefined;
 
@@ -48,6 +47,24 @@ interface Body {
   mode?: string;
   /** prior conversation turns, oldest first: { role: "user"|"assistant", text } */
   history?: unknown;
+}
+
+/** Answer simple cohort-size questions directly from the supplied snapshot.
+ * This remains available when the external AI service is slow or unavailable. */
+export function deterministicProgrammeAnswer(question: string, data: unknown): string | null {
+  if (!/\b(?:how many|number of|total)\s+(?:students?|learners?)\b|\b(?:students?|learners?)\s+(?:count|total)\b/i.test(question)) {
+    return null;
+  }
+  if (!data || typeof data !== "object") return null;
+  const source = data as { cohort?: { learners?: unknown }; learners?: unknown };
+  const cohortCount = source.cohort?.learners;
+  const count = typeof cohortCount === "number" && Number.isFinite(cohortCount)
+    ? Math.max(0, Math.trunc(cohortCount))
+    : Array.isArray(source.learners)
+      ? source.learners.length
+      : null;
+  if (count === null) return null;
+  return `There ${count === 1 ? "is" : "are"} ${count} learner${count === 1 ? "" : "s"} in the programme.`;
 }
 
 // Prompt parts — assembled per request so answer-mode questions don't pay for the report-writing spec.
@@ -316,8 +333,11 @@ async function handler(req: Request): Promise<Response> {
   const directAttendanceAnswer = mode === "answer"
     ? deterministicAttendanceAnswer(question, history, attendanceRecords)
     : null;
-  if (directAttendanceAnswer) {
-    return json({ error: "direct", answer: directAttendanceAnswer }, 200);
+  const directProgrammeAnswer = mode === "answer"
+    ? deterministicProgrammeAnswer(question, safeData)
+    : null;
+  if (directAttendanceAnswer || directProgrammeAnswer) {
+    return json({ error: "direct", answer: directAttendanceAnswer ?? directProgrammeAnswer }, 200);
   }
   if (!apiKey) {
     return json({ error: "not_configured" }, 200);

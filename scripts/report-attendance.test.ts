@@ -9,7 +9,7 @@ import {
   isCountedAttendanceRegister,
   MIN_ATTENDANCE_REGISTER_LEARNERS,
 } from "../src/lib/attendanceEvidence";
-import reportHandler, { unregisteredAttendanceDates } from "../api/generate-report";
+import reportHandler, { deterministicProgrammeAnswer, unregisteredAttendanceDates } from "../api/generate-report";
 import {
   containsProtectedLearnerInfoRequest,
   PRIVATE_LEARNER_INFO_REFUSAL,
@@ -39,6 +39,14 @@ test("a register counts only with at least four distinct learners", () => {
 
   const duplicateLearner = { ...rows, "duplicate-profile": rows["learner-1"] };
   assert.equal(attendanceSignerCount(duplicateLearner), 4);
+});
+
+test("programme learner counts are answered without an AI request", () => {
+  assert.equal(
+    deterministicProgrammeAnswer("how many students", { cohort: { learners: 12 } }),
+    "There are 12 learners in the programme."
+  );
+  assert.equal(deterministicProgrammeAnswer("tell me about progress", { cohort: { learners: 12 } }), null);
 });
 
 test("attendance records count absences from register statuses, not total sessions", () => {
