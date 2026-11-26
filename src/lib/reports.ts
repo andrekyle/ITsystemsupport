@@ -311,14 +311,26 @@ function isInMonth(date: Date, month: Date): boolean {
   return date.getFullYear() === month.getFullYear() && date.getMonth() === month.getMonth();
 }
 
-/** Units scheduled for delivery this month, preserved under their module headings. */
+/** Pick the single module currently being delivered, then expose all its units.
+ *  The most recent session this month wins; before the first session, use the
+ *  nearest upcoming module. This keeps tracker reports to one complete module. */
 function currentMonthModules(now = new Date()) {
-  return MODULES.map((module) => ({
-    name: module.name,
-    units: module.units.filter((unit) =>
-      parseSessionDates(unit.dates, unit.time).some((session) => isInMonth(session.start, now))
-    ),
-  })).filter((module) => module.units.length > 0);
+  const candidates = MODULES.map((module) => ({
+    module,
+    sessions: module.units.flatMap((unit) => parseSessionDates(unit.dates, unit.time))
+      .map((session) => session.start)
+      .filter((date) => isInMonth(date, now))
+      .sort((a, b) => a.getTime() - b.getTime()),
+  })).filter((candidate) => candidate.sessions.length > 0);
+  const past = candidates
+    .map((candidate) => ({ candidate, date: [...candidate.sessions].reverse().find((date) => date <= now) }))
+    .filter((item): item is { candidate: typeof candidates[number]; date: Date } => !!item.date)
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
+  const selected = past[0]?.candidate ?? candidates
+    .map((candidate) => ({ candidate, date: candidate.sessions.find((date) => date > now)! }))
+    .filter((item) => !!item.date)
+    .sort((a, b) => a.date.getTime() - b.date.getTime())[0]?.candidate;
+  return selected ? [{ name: selected.module.name, units: selected.module.units }] : [];
 }
 
 function outcomesData(rows: LearnerRow[], scope: ReportScope = "worked") {
@@ -503,7 +515,7 @@ export function buildReportData(
       return {
         ...base,
         scope: monthly
-          ? "current calendar month and only the module units scheduled in that month"
+          ? "current calendar month and every unit in the single active module"
           : base.scope,
         schedule: monthly
           ? monthlyModules.flatMap((module) => module.units.map((unit) =>
@@ -511,7 +523,7 @@ export function buildReportData(
             ))
           : base.schedule,
         instruction:
-          `Write one facilitator comment per learner (2-3 sentences) from their figures below. ${monthly ? "This is a current-month report: mention only the supplied current-month attendance and current module units; do not discuss earlier months or other units. " : ""}Attendance comes from the filled registers: sessionsExpected only counts sessions from the learner's firstSession onwards, so a learner who joined later but attended every session since is at 100% — never describe that as missing classes.`,
+          `Write one facilitator comment per learner (2-3 sentences) from their figures below. ${monthly ? "This is a current-month report: mention only the supplied current-month attendance and the single active module shown; include its full unit list and do not discuss earlier months or other modules. " : ""}Attendance comes from the filled registers: sessionsExpected only counts sessions from the learner's firstSession onwards, so a learner who joined later but attended every session since is at 100% — never describe that as missing classes.`,
         reportingPeriod: monthly
           ? `current calendar month (${now.toLocaleString("en-GB", { month: "long", year: "numeric" })}) only`
           : "all available records",
