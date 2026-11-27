@@ -113,3 +113,41 @@ test("the report API requests analysis narrative, not the management deck, and p
     else process.env.OPENAI_API_KEY = previousKey;
   }
 });
+
+test("the report API falls back to another model after a transient upstream outage", async () => {
+  const originalFetch = globalThis.fetch;
+  const previousKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "test-only-mocked";
+  const requestedModels: string[] = [];
+  let calls = 0;
+  globalThis.fetch = async (_input, init) => {
+    const request = JSON.parse(String(init?.body));
+    requestedModels.push(request.model);
+    calls += 1;
+    if (calls <= 2) return new Response(JSON.stringify({ error: { code: "server_error" } }), { status: 503 });
+    return new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({ direct: true, answer: "The fallback model answered." }) } }],
+      model: request.model,
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    const response = await reportHandler(new Request("http://localhost/api/generate-report", {
+      method: "POST",
+      body: JSON.stringify({
+        kind: "custom",
+        mode: "answer",
+        question: "Summarise programme progress.",
+        data: { cohort: { learners: 2 } },
+      }),
+    }));
+    const body = await response.json();
+    assert.equal(body.error, "direct");
+    assert.equal(body.answer, "The fallback model answered.");
+    assert.equal(requestedModels[0], requestedModels[1]);
+    assert.notEqual(requestedModels[2], requestedModels[1]);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+  }
+});

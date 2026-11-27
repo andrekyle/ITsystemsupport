@@ -194,7 +194,7 @@ function buildSystemPrompt(hasQuestion: boolean, mode: string, kind: string): st
 
 const MAX_DATA_LEN = 60_000;
 const LLM_TIMEOUT_MS = 45_000;
-const BUILD = "20261123-1";
+const BUILD = "20261127-1";
 
 const MODEL_CANDIDATES = MARKING_MODELS.map((model) => model.id);
 
@@ -400,8 +400,13 @@ async function handler(req: Request): Promise<Response> {
       if (!r.ok) {
         const failure = await r.json().catch(() => ({})) as { error?: { code?: string } };
         lastError = reportServiceError(r.status, failure.error?.code);
-        if (["quota_exceeded", "invalid_api_key", "rate_limited", "service_unavailable"].includes(lastError)) return json({ error: lastError }, 200);
-        continue; // model not available on this key — try the next candidate
+        // Authentication, billing and account-wide throttling cannot be fixed by
+        // changing models. A 5xx can be model/capacity-specific, though, so let
+        // the remaining candidates run after the current model has been retried.
+        if (["quota_exceeded", "invalid_api_key", "rate_limited"].includes(lastError)) {
+          return json({ error: lastError }, 200);
+        }
+        continue;
       }
       const data = (await r.json()) as {
         choices?: { message?: { content?: string } }[];
