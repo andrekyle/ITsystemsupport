@@ -13,7 +13,7 @@ import { storeUnitReplicaPages } from "../lib/forms";
 import { makeUnitExports } from "../lib/unitExports";
 import { createAiPresentation, type AiPresentationSlide } from "../lib/aiPresentation";
 import { plainSlideText } from "../lib/slideRichText";
-import { downloadDoc, getFileBlob, getFileUrl, uploadFile } from "../lib/files";
+import { deleteFile, downloadDoc, getFileBlob, getFileUrl, uploadFile } from "../lib/files";
 import { supabase } from "../lib/supabase";
 import { loadContentModel, loadPresentationModel, recordTokenUsage } from "../lib/tokens";
 import { UnitContentEditor, contentSections } from "./UnitContentEditor";
@@ -1050,12 +1050,15 @@ export function BuiltUnitDownloads({us,staff,onSaveChanges,savingChanges=false}:
   const [error,setError]=useState("");
   const [busy,setBusy]=useState("");
   const [message,setMessage]=useState("");
+  const [confirmRemove,setConfirmRemove]=useState(false);
   const [uploadPct,setUploadPct]=useState<number|null>(null);
   const [materialUrl,setMaterialUrl]=useState<string|null>(null);
   const isPdf=(doc?:PoeDoc)=>!!doc&&(/\.pdf$/i.test(doc.name)||doc.type.includes("pdf"));
   const isEditable=(doc?:PoeDoc)=>!!doc&&(/\.(ppt|pptx)$/i.test(doc.name)||doc.type.includes("presentation"));
   const displayMaterial=isPdf(built?.files.material)?built?.files.material:undefined;
-  const editableMaterial=built?.files.materialEditable??(isEditable(built?.files.material)?built?.files.material:built?.files.pptx);
+  // `files.pptx` is the generated unit export, not an uploaded presentation.
+  // Falling back to it here made a removed presentation immediately reappear.
+  const editableMaterial=built?.files.materialEditable??(isEditable(built?.files.material)?built?.files.material:undefined);
   useEffect(()=>{
     let cancelled=false;
     setMaterialUrl(null);
@@ -1094,6 +1097,18 @@ export function BuiltUnitDownloads({us,staff,onSaveChanges,savingChanges=false}:
     }catch(e){setError(e instanceof Error?e.message:"The editable slides could not be uploaded.");}
     finally{setBusy("");setUploadPct(null);}
   };
+  const removeMaterial=async()=>{
+    if(busy)return;
+    const paths=Array.from(new Set([displayMaterial?.path,editableMaterial?.path].filter((path):path is string=>!!path)));
+    setConfirmRemove(false);setError("");setMessage("");setBusy("Removing presentation...");
+    try{
+      await saveMaterial({material:undefined,materialEditable:undefined});
+      await Promise.all(paths.map(path=>deleteFile(path)));
+      setMaterialUrl(null);
+      setMessage("Presentation removed.");
+    }catch(e){setError(e instanceof Error?e.message:"The presentation could not be removed.");}
+    finally{setBusy("");}
+  };
   return <div className="built-course-material">
     <h2 className="section-title"><span className="ico"><Icon name="play" size={20}/></span>Course material</h2>
     <p className="muted" style={{marginTop:-6,marginBottom:14}}>Course material for this unit standard — displayed exactly as designed, like a PowerPoint presentation. Use the full screen button for presentation mode.</p>
@@ -1106,7 +1121,7 @@ export function BuiltUnitDownloads({us,staff,onSaveChanges,savingChanges=false}:
       {editableMaterial&&<button type="button" className="btn ghost dl-sample plan-ppt" onClick={()=>void downloadDoc(editableMaterial).catch(()=>setError("The editable slides could not be downloaded. Please retry."))}><Icon name="download" size={15}/>Editable slides (.pptx)</button>}
       {staff&&<button type="button" className="btn ghost dl-sample plan-ppt" disabled={!!busy} onClick={()=>pdfRef.current?.click()}><Icon name="presenter" size={15}/>{displayMaterial?"Replace with my version (.pdf)":"Upload course material (.pdf)"}</button>}
       {staff&&<button type="button" className="btn ghost dl-sample plan-ppt" disabled={!!busy} onClick={()=>editableRef.current?.click()}><Icon name="download" size={15}/>{editableMaterial?"Replace editable slides (.pptx)":"Upload editable slides (.pptx)"}</button>}
-      {staff&&(displayMaterial||editableMaterial)&&<button type="button" className="btn ghost dl-sample plan-ppt" disabled={!!busy} onClick={()=>void saveMaterial({material:undefined,materialEditable:undefined}).catch(e=>setError(e instanceof Error?e.message:"The course material could not be removed."))}><Icon name="close" size={14}/>Remove</button>}
+      {staff&&(displayMaterial||editableMaterial)&&<button type="button" className="btn ghost dl-sample plan-ppt" disabled={!!busy} onClick={()=>setConfirmRemove(true)}><Icon name="close" size={14}/>Remove</button>}
     </div>
     <input ref={pdfRef} type="file" hidden accept=".pdf,application/pdf" onChange={e=>{const file=e.target.files?.[0];e.target.value="";void onPdf(file);}}/>
     <input ref={editableRef} type="file" hidden accept=".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" onChange={e=>{const file=e.target.files?.[0];e.target.value="";void onEditable(file);}}/>
@@ -1114,5 +1129,6 @@ export function BuiltUnitDownloads({us,staff,onSaveChanges,savingChanges=false}:
     {!displayMaterial&&<p className="muted built-material-empty">{staff?"Upload the PDF export of your slides to show the presentation here. You can also upload the editable PowerPoint source.":"No course material has been uploaded for this built unit yet."}</p>}
     {displayMaterial&&(materialUrl?<SlideViewer src={materialUrl} allowDownload={staff}/>:<p className="muted">Loading course material...</p>)}
     {(busy||message)&&<p role="status">{busy||message}</p>}{error&&<p role="alert" className="auth-error">{error}</p>}
+    {confirmRemove&&<ConfirmModal title="Remove presentation?" message="Delete the uploaded course-material PDF and editable PowerPoint from this unit? This cannot be undone." confirmLabel="Remove presentation" danger busy={!!busy} onCancel={()=>setConfirmRemove(false)} onConfirm={()=>void removeMaterial()}/>}
   </div>;
 }

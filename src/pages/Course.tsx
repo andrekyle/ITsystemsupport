@@ -1069,6 +1069,12 @@ function scoreAnswer(
   };
 }
 
+function questionMaxMarks(exercise: Exercise, index: number): number {
+  const configured = exercise.questionMarks?.[index];
+  if (Number.isInteger(configured) && configured! > 0) return configured!;
+  return (exercise.checks?.[index]?.concepts.length ?? 0) * 2;
+}
+
 /* ---- marker feedback: explains WHY a key idea's marks were not awarded ---- */
 
 interface IdeaFeedback {
@@ -1265,6 +1271,7 @@ function joinParts(parts: string[]): string {
  *  only once the learner's own answer covers enough of those ideas. */
 export function ExerciseQuestion({
   check,
+  maxMarks,
   saved,
   savedOk,
   savedTries,
@@ -1274,6 +1281,8 @@ export function ExerciseQuestion({
   unitUs,
 }: {
   check: ExerciseCheck;
+  /** facilitator-defined maximum; defaults to two marks per generated key idea */
+  maxMarks?: number;
   saved: string;
   savedOk: boolean;
   /** how many of the allowed checks the learner has already used */
@@ -1337,8 +1346,15 @@ export function ExerciseQuestion({
     !!result && !result.short && !meaningVerified && reviewStatus.kind !== "unavailable";
   // Deterministic keyword matches are provisional only. Marks and correctness
   // are shown only after OpenAI has reviewed this exact answer.
+  const generatedMaxMarks = check.concepts.length * 2;
+  const availableMarks = Number.isInteger(maxMarks) && maxMarks! > 0 ? maxMarks! : generatedMaxMarks;
+  const withConfiguredMarks = (scored: ReturnType<typeof scoreAnswer>) => ({
+    ...scored,
+    marks: generatedMaxMarks ? Math.round((scored.marks / generatedMaxMarks) * availableMarks) : 0,
+    maxMarks: availableMarks,
+  });
   const effectiveResult = result
-    ? scoreAnswer(val, check, extras, meaningVerified ? extras : new Set())
+    ? withConfiguredMarks(scoreAnswer(val, check, extras, meaningVerified ? extras : new Set()))
     : null;
   const ok = meaningVerified && (effectiveResult?.ok ?? false);
   // Submission validation happens after per-question checking. If an older or
@@ -1387,7 +1403,7 @@ export function ExerciseQuestion({
       setExtras(approved);
       setReviewedText(val);
       setReviewStatus({ kind: "ran", approved: approved.size, reason: res.reason });
-      const rNow = scoreAnswer(val, check, approved, approved);
+      const rNow = withConfiguredMarks(scoreAnswer(val, check, approved, approved));
       onSave(val, rNow.ok, rNow.marks);
     });
     return () => {
@@ -1420,8 +1436,8 @@ export function ExerciseQuestion({
     <div className="exq">
       <div className="exq-marks-hint" aria-label="Marks available for this question">
         <span>
-          Marks available: <strong>{check.concepts.length * 2}</strong>
-          {" "}({check.concepts.length} key idea{check.concepts.length === 1 ? "" : "s"} × 2 marks each)
+          Marks available: <strong>{availableMarks}</strong>
+          {" "}({check.concepts.length} key idea{check.concepts.length === 1 ? "" : "s"})
           {!(ok || result || locked) && (
             <>
               {" "}—{" "}
@@ -1451,7 +1467,7 @@ export function ExerciseQuestion({
                   <span>
                     {nParts === 1 ? "Your answer" : `Key idea ${i + 1} of ${nParts}`}
                   </span>
-                  <span className="exq-part-marks">2 marks</span>
+                  <span className="exq-part-marks">{availableMarks} total marks</span>
                 </div>
                 <textarea
                   ref={(el) => {
@@ -1464,7 +1480,7 @@ export function ExerciseQuestion({
                   lang="en"
                   autoCorrect="on"
                   autoCapitalize="sentences"
-                  aria-label={`Key idea ${i + 1} of ${nParts} — 2 marks`}
+                  aria-label={`Key idea ${i + 1} of ${nParts} — ${availableMarks} total marks available`}
                   placeholder={
                     nParts === 1
                       ? `Type your answer here (at least ${MIN_ANSWER_WORDS} words — explain in your own words), then check it…`
@@ -1652,7 +1668,7 @@ export function ExerciseQuestion({
             <span className={`exq-status ${effectiveResult.short ? "short" : "wrong"}`}>
               {effectiveResult.short
                 ? `Answer too short — you wrote ${effectiveResult.words} word${effectiveResult.words === 1 ? "" : "s"}. Please explain your answer in your own words — a minimum of ${effectiveResult.minWords} words is required before any marks can be awarded.`
-                : `Not quite yet — your answer covers ${effectiveResult.matched} of ${check.concepts.length} key ideas (${effectiveResult.marks}/${effectiveResult.maxMarks} marks, 2 marks per point). Write ONE key idea per box — a box can earn at most one pair of ticks — and explain each idea in ≥${MIN_EXPLANATION_WORDS} words, mentioning the concept or a clear synonym. Revisit the lesson and try again.`}
+                : `Not quite yet — your answer covers ${effectiveResult.matched} of ${check.concepts.length} key ideas (${effectiveResult.marks}/${effectiveResult.maxMarks} marks). Write ONE key idea per box — a box can earn at most one set of marks — and explain each idea in ≥${MIN_EXPLANATION_WORDS} words, mentioning the concept or a clear synonym. Revisit the lesson and try again.`}
               {!canReveal &&
                 (checksLeft > 0
                   ? ` You have ${checksLeft} check${checksLeft === 1 ? "" : "s"} left.`
@@ -1687,8 +1703,7 @@ export function ExerciseQuestion({
         <div className="exq-status ok">
           <Icon name="checkCircle" size={15} />
           <span className="exq-ok-text">
-            Correct — {effectiveResult?.marks ?? 0} of {effectiveResult?.maxMarks ?? check.concepts.length * 2} marks (2
-            marks per point).
+            Correct — {effectiveResult?.marks ?? 0} of {effectiveResult?.maxMarks ?? availableMarks} marks.
             <DoubleTick />
             <span className="exq-reviewed" title="OpenAI reviewed each key idea for meaning">
               · Meaning checked by OpenAI
@@ -1728,7 +1743,7 @@ export function ExerciseQuestion({
                 <span className="exq-cross" aria-label="Not awarded">
                   <Icon name="close" size={14} />
                 </span>
-                {f.label} — 2 marks not awarded
+                {f.label} — marks not awarded
               </div>
               <p className="exq-miss-p">
                 {f.spentBox ? (
@@ -3086,6 +3101,7 @@ function UnitPageContent({
     task: "Time: 45 minutes - Activity: Self & Group",
     scenario: [],
     steps: [""],
+    questionMarks: [2],
   });
   const saveBuiltContent = async (nextContent: UnitContent) => {
     if (!builtUnit) return;
@@ -3336,8 +3352,9 @@ function UnitPageContent({
     setActivitySaving(true);
     try {
       setActivityEditError("");
-      const value = { ...activityEditor.value, steps: activityEditor.value.steps.map(q => q.trim()) };
+      const value = { ...activityEditor.value, steps: activityEditor.value.steps.map(q => q.trim()), questionMarks: activityEditor.value.steps.map((_, index) => Number(activityEditor.value.questionMarks?.[index] ?? 2)) };
       if (!value.title.trim() || !value.steps.length || value.steps.some(q => !q)) throw new Error("Enter a heading and fill in each question.");
+      if (value.questionMarks.some(mark => !Number.isInteger(mark) || mark < 1 || mark > 100)) throw new Error("Enter whole-number marks from 1 to 100 for every question.");
       const token = (await supabase?.auth.getSession())?.data.session?.access_token;
       const response = await fetch("/api/generate-activity-answers", {
         method: "POST",
@@ -3379,15 +3396,16 @@ function UnitPageContent({
         const reviewedText = String(latestLogbook[`${answerKey}.reviewedText`] ?? "");
         const reviewedMarks = Number(latestLogbook[`${answerKey}.marks`]);
         if (reviewedText === answers[i] && Number.isFinite(reviewedMarks) && reviewedMarks >= 0) {
-          score += Math.min(reviewedMarks, check.concepts.length * 2);
+          score += Math.min(reviewedMarks, questionMaxMarks(ex, i));
           continue;
         }
         const concepts = check.concepts.map((group, gi) => ({ id: `c${gi}`, label: check.labels?.[gi] ?? group[0], lessonLine: lessonLineFor(check, gi) ?? check.answer.join("\n") }));
         const result = await requestSemanticReview(answers[i], concepts, [], u.us);
         if (!result.ran || result.error) throw new Error("AI marking is unavailable. Your answers are kept; please submit again. No attempt was used.");
-        score += new Set(result.credited.filter(id => concepts.some(c => c.id === id))).size * 2;
+        const credited = new Set(result.credited.filter(id => concepts.some(c => c.id === id))).size;
+        score += Math.round((credited / check.concepts.length) * questionMaxMarks(ex, i));
       }
-      saveExerciseResult(u.us, ex.id, score, ex.checks.reduce((total, check) => total + check.concepts.length * 2, 0));
+      saveExerciseResult(u.us, ex.id, score, ex.checks.reduce((total, _check, index) => total + questionMaxMarks(ex, index), 0));
       // Make the answer text and result durable before navigation or a closed
       // cloud-sync debounce can interrupt the save.
       await flushProgress(profile.id);
@@ -5887,7 +5905,7 @@ function UnitPageContent({
             </span>
             <span>
               <strong>Answer in your own words — one key idea per box.</strong> Each key idea
-              earns 2 marks only when
+              earns marks only when
               the learner mentions the concept (either by keyword or a clear synonym) <em>and</em>{" "}
               gives an explanation of at least <strong>{MIN_EXPLANATION_WORDS} words</strong> that is
               semantically correct. A box can earn at most one pair of ticks, placed at the end
@@ -5907,7 +5925,7 @@ function UnitPageContent({
           {(tab === "questions" ? (content.questionSessions ?? []).map((ex, index) => ({ ex, kind: "questionSessions" as const, index })) : visibleActivities).map(({ex, kind, index}) => {
             const exRes = progress.units[u.us]?.exercises?.[ex.id];
             const hasChecks = !!ex.checks && ex.checks.length > 0;
-            const exTotalMarks = ex.checks?.reduce((t, c) => t + c.concepts.length * 2, 0) ?? 0;
+            const exTotalMarks = ex.checks?.reduce((t, _c, questionIndex) => t + questionMaxMarks(ex, questionIndex), 0) ?? 0;
             const canEditScript = isSuperUser && (!!inlineUnit || ex.id === "rp114051");
             const activityText = (part: string, original: string) =>
               inlineUnit ? original : lessonEdits.activityText?.[`${ex.id}:${part}`] ?? original;
@@ -5955,8 +5973,8 @@ function UnitPageContent({
                     <Icon name="clipboard" size={14} />
                     <span>
                       This {tab === "questions" ? "activity" : "exercise"} is out of{" "}
-                      <strong>{exTotalMarks} marks</strong> ({ex.checks!.length} question
-                      {ex.checks!.length === 1 ? "" : "s"} × 2 marks per key idea).
+                      <strong>{exTotalMarks} marks</strong> across {ex.checks!.length} question
+                      {ex.checks!.length === 1 ? "" : "s"}.
                     </span>
                   </p>
                 )}
@@ -5995,6 +6013,7 @@ function UnitPageContent({
                           <ExerciseQuestion
                             key={`${u.us}.${ex.id}.${i}.${exReset[ex.id] ?? 0}`}
                             check={check}
+                            maxMarks={questionMaxMarks(ex, i)}
                             saved={String(lb[`exq.${ex.id}.${i}`] ?? "")}
                             savedOk={lb[`exq.${ex.id}.${i}.ok`] === true}
                             savedTries={Number(lb[`exq.${ex.id}.${i}.tries`] ?? 0) || 0}
@@ -6063,7 +6082,7 @@ function UnitPageContent({
                   const checks = ex.checks;
                   const res = progress.units[u.us]?.exercises?.[ex.id];
                   const attempts = res?.attempts ?? 0;
-                  const total = checks.reduce((t, c) => t + c.concepts.length * 2, 0);
+                  const total = checks.reduce((t, _c, questionIndex) => t + questionMaxMarks(ex, questionIndex), 0);
                   return (
                     <div className="exq-submit">
                       {activityMarkError[ex.id] && <p role="alert" className="auth-error">{activityMarkError[ex.id]}</p>}
@@ -6106,7 +6125,7 @@ function UnitPageContent({
                       )}
                       {!res && (
                         <span className="exq-score muted-score">
-                          Each key idea is worth 2 marks — {total} marks available. Best of {EX_MAX_ATTEMPTS}{" "}
+                          {total} marks available. Best of {EX_MAX_ATTEMPTS}{" "}
                           attempts is recorded on your profile.
                         </span>
                       )}

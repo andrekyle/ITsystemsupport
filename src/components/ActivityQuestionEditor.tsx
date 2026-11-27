@@ -35,12 +35,16 @@ export function ActivityQuestionEditor({ value, onChange }: { value: Exercise; o
           <div className="activity-editor-question-heading">
             <span className="activity-editor-question-number">{String(index + 1).padStart(2, "0")}</span>
             <label htmlFor={`activity-question-${index}`}>Question {index + 1}</label>
-            <button type="button" className="btn ghost sm activity-question-remove" aria-label={`Remove question ${index + 1}`} disabled={value.steps.length === 1} onClick={() => onChange({ ...value, steps: value.steps.filter((_, questionIndex) => questionIndex !== index) })}>Remove</button>
+            <label className="activity-question-marks" htmlFor={`activity-question-marks-${index}`}>
+              Marks
+              <input id={`activity-question-marks-${index}`} type="number" min={1} max={100} step={1} value={value.questionMarks?.[index] ?? 2} onChange={event => onChange({ ...value, questionMarks: value.steps.map((_, questionIndex) => questionIndex === index ? Number(event.target.value) : value.questionMarks?.[questionIndex] ?? 2) })} />
+            </label>
+            <button type="button" className="btn ghost sm activity-question-remove" aria-label={`Remove question ${index + 1}`} disabled={value.steps.length === 1} onClick={() => onChange({ ...value, steps: value.steps.filter((_, questionIndex) => questionIndex !== index), questionMarks: value.questionMarks?.filter((_, questionIndex) => questionIndex !== index) })}>Remove</button>
           </div>
           <textarea id={`activity-question-${index}`} rows={2} value={question} onChange={event => onChange({ ...value, steps: value.steps.map((item, questionIndex) => questionIndex === index ? event.target.value : item) })} placeholder="Enter a question for learners." />
         </li>)}
       </ol>
-      <button type="button" className="btn ghost sm activity-question-add" disabled={value.steps.length >= 12} onClick={() => onChange({ ...value, steps: [...value.steps, ""] })}>+ Add question</button>
+      <button type="button" className="btn ghost sm activity-question-add" disabled={value.steps.length >= 12} onClick={() => onChange({ ...value, steps: [...value.steps, ""], questionMarks: [...(value.questionMarks ?? value.steps.map(() => 2)), 2] })}>+ Add question</button>
     </section>
   </div>;
 }

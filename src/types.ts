@@ -397,6 +397,8 @@ export interface Exercise {
   /** scenario / instruction paragraphs shown above the questions */
   scenario?: string[];
   steps: string[];
+  /** facilitator-defined maximum marks per question (index-aligned with steps) */
+  questionMarks?: number[];
   /** per-question typed-answer blocks with semantic checking (index-aligned with steps) */
   checks?: ExerciseCheck[];
   /** ideal answers for the scenario task — revealed by a super-user-only button */

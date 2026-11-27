@@ -9,8 +9,8 @@ export function ActivityInlineEditor({ value, onChange, disabled }: { value: Exe
     <p><InlineText value={(value.scenario ?? []).join("\n")} editable={!disabled} multiline placeholder="Add background or instructions" onSave={text => onChange({ ...value, scenario: text.split("\n") })} /></p>
     <ol>{value.steps.map((question, index) => <li key={index}>
       <InlineText value={question} editable={!disabled} multiline placeholder="Type the learner question" onSave={text => onChange({ ...value, steps: value.steps.map((step, i) => i === index ? text : step) })} />
-      <button type="button" className="btn ghost sm" disabled={disabled || value.steps.length === 1} onClick={() => onChange({ ...value, steps: value.steps.filter((_, i) => i !== index) })}>Remove question</button>
+      <button type="button" className="btn ghost sm" disabled={disabled || value.steps.length === 1} onClick={() => onChange({ ...value, steps: value.steps.filter((_, i) => i !== index), questionMarks: value.questionMarks?.filter((_, i) => i !== index) })}>Remove question</button>
     </li>)}</ol>
-    <button type="button" className="btn ghost sm" disabled={disabled || value.steps.length >= 12} onClick={() => onChange({ ...value, steps: [...value.steps, ""] })}>Add question</button>
+    <button type="button" className="btn ghost sm" disabled={disabled || value.steps.length >= 12} onClick={() => onChange({ ...value, steps: [...value.steps, ""], questionMarks: [...(value.questionMarks ?? value.steps.map(() => 2)), 2] })}>Add question</button>
   </div>;
 }
